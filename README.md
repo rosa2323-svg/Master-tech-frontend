@@ -21,20 +21,19 @@ git clone https://github.com/rosa2323-svg/Herramientas01.git
 ---
 
 ## 2. Estructura del proyecto
-Herramientas/
+Herramientas01/
 ├── CSS/
 │ └── estilos.css # Estilos generales del sitio
 ├── html/
-│ ├── Index.html # Página principal (catálogo, banner, packs)
 │ ├── registro.html # Registro/login de usuario
 │ ├── nosotros.html # Página "Nosotros"
 │ └── mision.html # Misión y visión
-├── imagenes/
+├── Imagenes/
 │ └── ... # Íconos, banners, imágenes de productos y packs
 ├── JS/
 │ ├── emergente.js # Ventanas/modales emergentes
 │ └── solicitarlogin.js # Lógica del formulario de login
-├── render.yaml # Configuración de despliegue estático en Render
+├── index.html # Página principal (catálogo, banner, packs)
 └── README.md
 
 ---
@@ -49,6 +48,7 @@ Herramientas/
 | `feature/diseno-css` | Estilos y diseño visual |
 | `feature/logica-js` | Funcionalidad JavaScript |
 | `feature/recursos-img` | Imágenes y recursos gráficos |
+| `bugfix/error-vistas-html` | Corrección de errores en las vistas HTML de las páginas |
 
 **Reglas de protección de ramas:**
 - `main` y `develop` requieren Pull Request + 2 aprobaciones + resolución de conversaciones antes de mergear

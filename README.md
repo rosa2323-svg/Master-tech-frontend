@@ -47,7 +47,7 @@ Herramientas01/
 | `feature/vistas-html` | Estructura HTML de las páginas |
 | `feature/diseño-css` | Estilos y diseño visual |
 | `feature/logica-js` | Funcionalidad JavaScript |
-| `imagen de recursos/característica` | Imágenes y recursos gráficos |
+| `feature/recursos-img` | Imágenes y recursos gráficos |
 | `feature/compatibilidad-navegadores` | Ajustes de compatibilidad entre navegadores |
 | `bugfix/error-vistas-html` | Corrección de errores en las vistas HTML |
 | `bugfix/error-design-css` | Corrección de errores de estilos y diseño |

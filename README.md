@@ -42,13 +42,15 @@ Herramientas01/
 
 | Rama | Responsable de |
 |---|---|
-| `main` | Versión estable/final |
-| `develop` | Integración de todas las features |
+| `principal` | Versión estable/final |
+| `desarrollar` | Integración de todas las features |
 | `feature/vistas-html` | Estructura HTML de las páginas |
-| `feature/diseno-css` | Estilos y diseño visual |
+| `feature/diseño-css` | Estilos y diseño visual |
 | `feature/logica-js` | Funcionalidad JavaScript |
-| `feature/recursos-img` | Imágenes y recursos gráficos |
-| `bugfix/error-vistas-html` | Corrección de errores en las vistas HTML de las páginas |
+| `imagen de recursos/característica` | Imágenes y recursos gráficos |
+| `feature/compatibilidad-navegadores` | Ajustes de compatibilidad entre navegadores |
+| `bugfix/error-vistas-html` | Corrección de errores en las vistas HTML |
+| `bugfix/error-design-css` | Corrección de errores de estilos y diseño |
 
 **Reglas de protección de ramas:**
 - `main` y `develop` requieren Pull Request + 2 aprobaciones + resolución de conversaciones antes de mergear

@@ -1,31 +1,57 @@
+// FUNCIÓN AUXILIAR: MUESTRA EL POPUP EN LUGAR DEL ALERT NATIVO
+function mostrarAlerta(mensaje, esExito = false) {
+    const modalElement = document.getElementById('alertModal');
+    if (!modalElement) {
+        alert(mensaje);
+        return;
+    }
+
+    const alertMessage = document.getElementById('alertMessage');
+    const alertTitleText = document.getElementById('alertTitleText');
+    const alertIcon = document.getElementById('alertIcon');
+    const alertTitleContainer = document.getElementById('alertTitle');
+
+    alertMessage.textContent = mensaje;
+
+    if (esExito) {
+        alertTitleText.textContent = "¡Éxito!";
+        alertTitleContainer.className = "modal-title fw-bold w-100 text-center text-success";
+        alertIcon.className = "bi bi-check-circle-fill me-2 text-success";
+    } else {
+        alertTitleText.textContent = "Atención";
+        alertTitleContainer.className = "modal-title fw-bold w-100 text-center text-danger";
+        alertIcon.className = "bi bi-exclamation-triangle-fill me-2 text-danger";
+    }
+
+    const alertModal = new bootstrap.Modal(modalElement);
+    alertModal.show();
+}
+
 // VALIDACIÓN CLIENTE: INICIO DE SESIÓN
-const formLogin = document.getElementById("formLogin"); // Asegúrate de que tu form de login tenga este ID
+const formLogin = document.getElementById("formLogin");
 
 if (formLogin) {
     formLogin.addEventListener("submit", function (e) {
-        e.preventDefault(); // Previene recarga de página
+        e.preventDefault();
 
         const email = document.getElementById("correo").value;
-        const password = document.getElementById("password").value;
+        const passwordElement = document.getElementById("loginPassword") || document.getElementById("password");
+        const password = passwordElement.value;
 
-        // 1. Validar campos vacíos
         if (!email || !password) {
-            alert("Por favor, ingresa tu correo y contraseña.");
+            mostrarAlerta("Por favor, ingresa tu correo y contraseña.");
             return;
         }
 
-        // 2. Validar formato de correo
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!emailRegex.test(email)) {
-            alert("El formato del correo electrónico no es válido.");
+            mostrarAlerta("El formato del correo electrónico no es válido.");
             return;
         }
 
-        // Simulación de éxito
-        alert("¡Inicio de sesión exitoso! (Simulación Frontend)");
+        mostrarAlerta("¡Inicio de sesión exitoso! (Simulación Frontend)", true);
         formLogin.reset();
 
-        // Cierra el modal automáticamente si está dentro de uno
         const modalElement = document.getElementById("loginModal");
         if (modalElement) {
             const modal = bootstrap.Modal.getInstance(modalElement);
@@ -34,9 +60,8 @@ if (formLogin) {
     });
 }
 
-
 // VALIDACIÓN CLIENTE: REGISTRO DE CUENTA
-const formRegistro = document.getElementById("formRegistro"); // Asegúrate de que tu form de registro tenga este ID
+const formRegistro = document.getElementById("formRegistro");
 
 if (formRegistro) {
     formRegistro.addEventListener("submit", function (e) {
@@ -51,33 +76,58 @@ if (formRegistro) {
         const confirmPassword = document.getElementById("confirmPassword").value;
         const terminos = document.getElementById("terminos").checked;
 
-        // 1. Validar que no haya campos vacíos
+        // 1. Validar campos vacíos
         if (!nombre || !dni || !direccion || !email || !telefono || !password || !confirmPassword) {
-            alert("Por favor, completa todos los campos del formulario.");
+            mostrarAlerta("Por favor, completa todos los campos del formulario.");
             return;
         }
 
         // 2. Validar formato de correo
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!emailRegex.test(email)) {
-            alert("Por favor, ingresa un correo electrónico válido.");
+            mostrarAlerta("Por favor, ingresa un correo electrónico válido.");
             return;
         }
 
-        // 3. Validar que las contraseñas coincidan
+        // 3. Validar longitud exacta de DNI y Teléfono
+        if (dni.length !== 8) {
+            mostrarAlerta("El DNI debe tener exactamente 8 dígitos.");
+            return;
+        }
+
+        if (telefono.length !== 9) {
+            mostrarAlerta("El número de teléfono debe tener exactamente 9 dígitos.");
+            return;
+        }
+
+        // 4. Validar contraseña robusta
+        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
+        if (!passwordRegex.test(password)) {
+            mostrarAlerta("La contraseña debe tener mínimo 6 caracteres, incluir una mayúscula, un número y un carácter especial.");
+            return;
+        }
+
+        // 5. Validar que las contraseñas coincidan
         if (password !== confirmPassword) {
-            alert("Las contraseñas no coinciden. Por favor, verifícalas.");
+            mostrarAlerta("Las contraseñas no coinciden. Por favor, verifícalas.");
             return;
         }
 
-        // 4. Validar que se aceptaron los términos
+        // 6. Validar términos
         if (!terminos) {
-            alert("Debes aceptar los Términos y Condiciones para continuar.");
+            mostrarAlerta("Debes aceptar los Términos y Condiciones para continuar.");
             return;
         }
 
-        // Simulación de éxito
-        alert("¡Cuenta creada exitosamente!");
+        // Simulación de éxito disparando el modal de éxito existente en registro.html
+        const modalExitoElement = document.getElementById("registroExitosoModal");
+        if (modalExitoElement) {
+            const modalExito = new bootstrap.Modal(modalExitoElement);
+            modalExito.show();
+        } else {
+            mostrarAlerta("¡Cuenta creada exitosamente!", true);
+        }
+
         formRegistro.reset();
     });
 }

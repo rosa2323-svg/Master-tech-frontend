@@ -27,25 +27,9 @@ function crearTarjetaProducto(producto, rutaImagenes) {
     </div>`;
 }
 
-function renderizarProductos(lista, idContenedor, rutaImagenes, termino) {
+function renderizarProductos(lista, idContenedor, rutaImagenes) {
     const contenedor = document.getElementById(idContenedor);
     if (!contenedor) return;
 
-    if (lista.length === 0) {
-        mostrarSinResultados(contenedor, termino);
-        return;
-    }
     contenedor.innerHTML = lista.map(p => crearTarjetaProducto(p, rutaImagenes)).join("");
-}
-
-// Interfaz "Sin resultados" (checklist 3 de la tarjeta del buscador)
-function mostrarSinResultados(contenedor, termino) {
-    contenedor.innerHTML = `
-    <div class="col-12 text-center py-5">
-        <i class="bi bi-search fs-1 text-muted"></i>
-        <h5 class="mt-3 text-muted">No encontramos productos${termino ? ' para <strong id="terminoSinResultados"></strong>' : ''}</h5>
-        <p class="text-muted small">Intenta con otro termino o explora nuestras categorias.</p>
-    </div>`;
-    const spanTermino = document.getElementById("terminoSinResultados");
-    if (spanTermino) spanTermino.textContent = `"${termino}"`;
 }

@@ -18,7 +18,7 @@ function crearTarjetaProducto(producto, rutaImagenes) {
             : '<span class="badge bg-success">En stock</span>'}
                 </div>
                 <button type="button" class="btn-agregar" ${agotado ? "disabled" : ""}
-                        data-id="${producto.id}" data-nombre="${producto.nombre}"
+                        data-id="${producto.id}" data-nombre="${producto.nombre.replace(/"/g, "&quot;")}"
                         data-precio="${producto.precio.toFixed(2)}" data-marca="${producto.marca}">
                     <i class="bi bi-cart-plus me-1"></i>${agotado ? "Agotado" : "Agregar al carrito"}
                 </button>

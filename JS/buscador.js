@@ -17,8 +17,10 @@ function buscarProductos(termino) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+    const inputBusqueda = document.getElementById("inputBusqueda");
     const parametros = new URLSearchParams(window.location.search);
     const tituloCategoria = document.getElementById("tituloCategoria");
+    const textoBusqueda = document.getElementById("textoBusqueda");
 
     if (tituloCategoria) {
         const categoria = parametros.get("cat") || "";
@@ -31,6 +33,14 @@ document.addEventListener("DOMContentLoaded", function () {
         tituloCategoria.textContent = nombres[categoria] || categoria;
         document.title = "Categoria: " + (nombres[categoria] || categoria);
         renderizarProductos(productos.filter(p => p.categoria === categoria), "productGrid", rutaImagenes);
+
+    } else if (textoBusqueda) {
+        const termino = parametros.get("query") || "";
+        const resultados = buscarProductos(termino);
+        textoBusqueda.textContent = `"${termino}"`;
+        inputBusqueda.value = termino;
+        document.getElementById("totalResultados").textContent = resultados.length;
+        renderizarProductos(resultados, "productGrid", rutaImagenes, termino);
 
     } else if (document.getElementById("productGrid")) {
         renderizarProductos(productos, "productGrid", rutaImagenes);

@@ -1,6 +1,7 @@
 
 const enSubcarpeta = window.location.pathname.includes("/html/");
 const rutaImagenes = enSubcarpeta ? "../Imagenes/" : "Imagenes/";
+const paginaResultados = enSubcarpeta ? "resultados-busqueda.html" : "html/resultados-busqueda.html";
 
 function normalizarTexto(texto) {
     return texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
@@ -19,6 +20,17 @@ function buscarProductos(termino) {
 document.addEventListener("DOMContentLoaded", function () {
     const inputBusqueda = document.getElementById("inputBusqueda");
     const parametros = new URLSearchParams(window.location.search);
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                const termino = this.value.trim();
+                if (termino) {
+                    window.location.href = `${paginaResultados}?query=${encodeURIComponent(termino)}`;
+                }
+            }
+        });
+    }
     const tituloCategoria = document.getElementById("tituloCategoria");
     const textoBusqueda = document.getElementById("textoBusqueda");
 

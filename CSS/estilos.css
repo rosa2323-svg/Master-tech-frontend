@@ -27,6 +27,27 @@ body {
     color: var(--color-hover);
 }
 
+.navbar-nav .nav-link.px-4 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    white-space: nowrap;
+    transition: color 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+    color: var(--color-hover) !important;
+}
+
+/* Menú hamburguesa en mayores dispositivos */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    .navbar-expand-lg .navbar-collapse {
+        display: none !important;
+    }
+    .navbar-expand-lg .navbar-toggler {
+        display: block !important;
+    }
+}
+
 /*Footer*/
 
 footer {
@@ -73,12 +94,232 @@ footer h4, footer h6 {
 }
 
 /*Tarjeta de producto*/
-
 .product-card {
+    -webkit-transition: -webkit-transform 0.3s ease, box-shadow 0.3s ease;
+    -moz-transition: -moz-transform 0.3s ease, box-shadow 0.3s ease;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .product-card:hover {
+    -webkit-transform: translateY(-8px);
+    -moz-transform: translateY(-8px);
     transform: translateY(-8px);
+    -webkit-box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
+    -moz-box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
+}
+
+/*Categorias*/
+.col-6.col-sm-4.col-md-2 > a {
+    transition: transform 0.3s ease;
+}
+
+.col-6.col-sm-4.col-md-2 > a:hover {
+    transform: translateY(-6px);
+}
+
+.col-6.col-sm-4.col-md-2 > a img {
+    transition: transform 0.3s ease;
+}
+
+.col-6.col-sm-4.col-md-2 > a:hover img {
+    transform: scale(1.08);
+}
+
+/*Iniciar sesión y Registro*/
+/*Inputs, botones y validaciones*/
+
+#registro-main .form-control::placeholder,
+#loginModal .form-control::placeholder {
+    color: #6c757d;
+}
+
+#registro-main .form-control:focus,
+#loginModal .form-control:focus {
+    border-color: var(--color-secundario);
+    box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.25);
+}
+
+#registro-main .btn-danger,
+#loginModal .btn-danger {
+    -webkit-transition: -webkit-transform 0.2s ease, box-shadow 0.3s ease;
+    -moz-transition: -moz-transform 0.2s ease, box-shadow 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+#registro-main .btn-danger:hover,
+#loginModal .btn-danger:hover {
+    -webkit-transform: translateY(-2px);
+    -moz-transform: translateY(-2px);
+    transform: translateY(-2px);
+    -webkit-box-shadow: 0 6px 14px rgba(255, 0, 0, 0.35);
+    -moz-box-shadow: 0 6px 14px rgba(255, 0, 0, 0.35);
+    box-shadow: 0 6px 14px rgba(255, 0, 0, 0.35);
+}
+
+/*Popup de Promoción*/
+
+#promoModal {
+    z-index: 1060;
+}
+
+#promoModal .modal-content {
+    background-color: rgba(10, 10, 10, 0.92);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    color: var(--color-claro);
+}
+
+#promoModal .btn-close {
+    -webkit-filter: invert(1) grayscale(100%) brightness(2);
+    filter: invert(1) grayscale(100%) brightness(2);
+}
+
+#promoModal .btn-danger {
+    background-color: var(--color-secundario);
+    border: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#promoModal .btn-danger:hover {
+    background-color: var(--color-hover);
+    transform: translateY(-2px);
+}
+
+/*Media Queries en Moviles*/
+
+@media (max-width: 991.98px) {
+    .navbar-collapse {
+        background-color: var(--color-oscuro);
+        border-radius: 8px;
+        margin-top: 0.75rem;
+        padding: 1rem;
+    }
+
+    .navbar-nav .nav-link {
+        padding: 0.6rem 1rem !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .navbar-nav .nav-link:last-child {
+        border-bottom: none;
+    }
+}
+
+/* Grilla de productos y textos en misión, visión y nosotros para moviles */
+
+@media (max-width: 576px) {
+    .display-5 {
+        font-size: 1.8rem;
+    }
+
+    .display-6 {
+        font-size: 1.4rem;
+    }
+
+    .lead {
+        font-size: 1rem;
+    }
+
+    .product-card .card-body {
+        padding: 1rem !important;
+    }
+}
+
+/* TARJETAS DE PRODUCTO */
+.tarjeta-producto {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #ffffff;
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    -webkit-transition: -webkit-transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.tarjeta-producto:hover {
+    -webkit-transform: translateY(-5px);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
+}
+
+/* Contenedor de imagen: tamano fijo, la foto se ajusta sin deformarse */
+.tarjeta-producto-img {
+    width: 100%;
+    height: 200px;
+    padding: 10px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #ffffff;
+    border-radius: 10px;
+}
+
+.tarjeta-producto-img img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
+.tarjeta-producto-marca {
+    align-self: flex-start;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: #1a0b3d;
+    color: #ffffff;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+.tarjeta-producto-nombre {
+    min-height: 45px;
+    margin: 8px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #000000;
+}
+
+.tarjeta-producto-precio {
+    font-size: 20px;
+    font-weight: bold;
+    color: #000000;
+}
+
+.btn-agregar {
+    width: 100%;
+    margin-top: auto;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #1a0b3d;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: background 0.2s;
+}
+
+.btn-agregar:hover:not(:disabled) {
+    background: #cc0000;
+    color: #ffffff;
+}
+
+.btn-agregar:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .tarjeta-producto { padding: 10px; }
+    .tarjeta-producto-img { height: 140px; }
+    .tarjeta-producto-nombre { font-size: 13px; min-height: 38px; }
+    .tarjeta-producto-precio { font-size: 17px; }
 }

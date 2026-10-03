@@ -1,4 +1,4 @@
-# Master Tech — Tienda web de tecnología y servicios tecnicos 
+# Master Tech — Tienda web de tecnología y servicios técnicos
 
 Tienda web para artículos de tecnología (laptops, computadoras, teléfonos, tablets, accesorios y componentes), con catálogo de productos, packs promocionales y sección de servicio técnico.
 

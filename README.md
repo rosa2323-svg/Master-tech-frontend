@@ -12,9 +12,9 @@ Este proyecto no requiere instalación de dependencias ni build, ya que es HTML/
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/rosa2323-svg/Herramientas01.git
+git clone https://github.com/rosa2323-svg/Master-tech-frontend.git
 
-# 2. Abrir html/Index.html directamente en el navegador
+# 2. Abrir index.html directamente en el navegador
 # o usar la extensión "Live Server" en tu editor para verlo con recarga automática
 ```
 

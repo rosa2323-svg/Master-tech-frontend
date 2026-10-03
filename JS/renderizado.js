@@ -6,7 +6,7 @@ function crearTarjetaProducto(producto, rutaImagenes) {
     <div class="col-6 col-sm-4 col-md-3">
         <div class="tarjeta-producto">
             <div class="tarjeta-producto-img">
-                <img src="${rutaImagenes}${producto.imagen}" alt="${producto.nombre}">
+                <img src="${rutaImagenes}${producto.imagen}" alt="${producto.nombre.replace(/"/g, "&quot;")}">
             </div>
             <div class="p-3 d-flex flex-column flex-grow-1">
                 <span class="tarjeta-producto-marca">${producto.marca}</span>

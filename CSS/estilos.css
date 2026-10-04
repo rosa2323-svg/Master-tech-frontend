@@ -262,6 +262,17 @@ footer h4, footer h6 {
     background: #fff;
 }
 
+.btn-comprar {
+    background: #1a0b3d;
+    color: #fff;
+    font-weight: 700;
+    border-radius: 10px;
+    letter-spacing: 0.5px;
+    transition: background .2s;
+}
+
+.btn-comprar:hover { background: #cc0000; color: #fff; }
+
 /* TARJETAS DE PRODUCTO */
 .tarjeta-producto {
     display: flex;

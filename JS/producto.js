@@ -66,4 +66,14 @@
             </button>
         </div>
     </div>`;
+
+    // Productos relacionados: misma categoría, sin el producto actual
+    const relacionados = productos
+        .filter(x => x.categoria === p.categoria && x.id !== p.id)
+        .slice(0, 4);
+
+    if (relacionados.length > 0) {
+        document.getElementById("seccionRelacionados").classList.remove("d-none");
+        renderizarProductos(relacionados, "relacionados", "../Imagenes/");
+    }
 })();

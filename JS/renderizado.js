@@ -17,15 +17,23 @@ function crearTarjetaProducto(producto, rutaImagenes) {
     const agotado = producto.stock <= 0;
     const ultimas = producto.stock > 0 && producto.stock <= 5;
 
+    // Desde el index la ruta es "html/producto.html"; desde html/ es "producto.html"
+    const rutaPaginas = rutaImagenes.startsWith("..") ? "" : "html/";
+    const urlDetalle = `${rutaPaginas}producto.html?id=${producto.id}`;
+
     return `
     <div class="col-6 col-sm-4 col-md-3">
         <div class="tarjeta-producto">
-            <div class="tarjeta-producto-img">
-                <img src="${rutaImagenes}${escaparHtml(producto.imagen)}" alt="${nombre}">
-            </div>
+            <a href="${urlDetalle}">
+                <div class="tarjeta-producto-img">
+                    <img src="${rutaImagenes}${escaparHtml(producto.imagen)}" alt="${nombre}">
+                </div>
+            </a>
             <div class="p-3 d-flex flex-column flex-grow-1">
                 <span class="tarjeta-producto-marca">${marca}</span>
-                <p class="tarjeta-producto-nombre">${nombre}</p>
+                <a href="${urlDetalle}" class="text-decoration-none text-reset">
+                    <p class="tarjeta-producto-nombre">${nombre}</p>
+                </a>
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <span class="tarjeta-producto-precio">S/ ${producto.precio.toFixed(2)}</span>
                     ${agotado ? '<span class="badge bg-secondary">Agotado</span>'

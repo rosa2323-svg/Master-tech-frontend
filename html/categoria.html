@@ -60,10 +60,16 @@
 </nav>
 
 <main class="flex-grow-1">
-  <div class="container py-5">
-    <h4 id="tituloCategoria" class="fw-bold mb-4"></h4>
-    <div id="productGrid" class="row g-4"></div>
-  </div>
+    <div class="container py-5">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-3">
+                <li class="breadcrumb-item"><a class="text-dark text-decoration-none fw-bold" href="../index.html">Inicio</a></li>
+                <li class="breadcrumb-item active" id="breadcrumbActual" aria-current="page">Categoría</li>
+            </ol>
+        </nav>
+        <h4 id="tituloCategoria" class="fw-bold mb-4"></h4>
+        <div id="productGrid" class="row g-4"></div>
+    </div>
 </main>
 <!-- MODAL DE LOGIN -->
 <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
@@ -168,5 +174,6 @@
 <script src="../JS/buscador.js"></script>
 <script src="../JS/solicitarlogin.js"></script>
 <script src="../JS/emergente.js"></script>
+<script src="../JS/categoria.js"></script>
 </body>
 </html>

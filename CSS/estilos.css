@@ -56,6 +56,16 @@ body {
     font-weight: var(--fw-regular);
 }
 
+/*Utilidades Master Tech*/
+
+.text-mastertech {
+    color: var(--color-secundario) !important;
+}
+
+.bg-mastertech {
+    background-color: var(--color-primario) !important;
+}
+
 /*Barra de Navegación*/
 
 .navbar .bi {

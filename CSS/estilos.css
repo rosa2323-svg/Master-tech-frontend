@@ -1,12 +1,21 @@
 /*Variables Globales*/
 
 :root {
+    /* Primarios */
     --color-primario: #1a0b3d;
+
+    /* Secundarios */
     --color-secundario: #cc0000;
     --color-hover: #ff0000;
+
+    /* Neutros */
     --color-oscuro: #000000;
     --color-claro: #ffffff;
     --color-gris: #9ca3af;
+    --color-gris-claro: #aaaaaa;
+    --color-gris-texto: #6c757d;
+    --color-fondo-footer: #0a0a0a;
+
     --fuente-principal: 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -51,7 +60,7 @@ body {
 /*Footer*/
 
 footer {
-    background: linear-gradient(180deg, var(--color-oscuro) 0%, #0a0a0a 100%);
+    background: linear-gradient(180deg, var(--color-oscuro) 0%, var(--color-fondo-footer) 100%);
 }
 
 footer a {
@@ -63,7 +72,7 @@ footer a:hover {
 }
 
 .footer-link {
-    color: #aaa;
+    color: var(--color-gris-claro);
     text-decoration: none;
     transition: all 0.3s ease;
 }
@@ -131,7 +140,7 @@ footer h4, footer h6 {
 
 #registro-main .form-control::placeholder,
 #loginModal .form-control::placeholder {
-    color: #6c757d;
+    color: var(--color-gris-texto);
 }
 
 #registro-main .form-control:focus,

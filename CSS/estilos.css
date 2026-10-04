@@ -325,6 +325,6 @@ footer h4, footer h6 {
 }
 
 .navbar-nav .nav-link.active {
-    color: #fff;
-    border-bottom: 2px solid #dc3545;
+    color: var(--color-claro);
+    border-bottom: 2px solid var(--color-secundario);
 }

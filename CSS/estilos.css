@@ -323,3 +323,8 @@ footer h4, footer h6 {
     .tarjeta-producto-nombre { font-size: 13px; min-height: 38px; }
     .tarjeta-producto-precio { font-size: 17px; }
 }
+
+.navbar-nav .nav-link.active {
+    color: #fff;
+    border-bottom: 2px solid #dc3545;
+}

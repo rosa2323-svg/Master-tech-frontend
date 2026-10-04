@@ -254,6 +254,14 @@ footer h4, footer h6 {
 .empty-cart { text-align: center; padding: 80px 20px; color: #888; }
 .empty-cart i { font-size: 72px; }
 
+
+.resumen-card {
+    border: none;
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.10);
+    background: #fff;
+}
+
 /* TARJETAS DE PRODUCTO */
 .tarjeta-producto {
     display: flex;

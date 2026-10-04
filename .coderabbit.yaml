@@ -1,0 +1,9 @@
+language: "es-ES"
+tone_instructions: "Responde en español, breve y directo, sin emojis."
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  auto_review:
+    enabled: true
+    drafts: false

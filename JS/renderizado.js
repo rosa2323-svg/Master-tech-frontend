@@ -34,7 +34,9 @@ function crearTarjetaProducto(producto, rutaImagenes) {
                 </div>
                 <button type="button" class="btn-agregar" ${agotado ? "disabled" : ""}
                         data-id="${producto.id}" data-nombre="${nombre}"
-                        data-precio="${producto.precio.toFixed(2)}" data-marca="${marca}">
+                        data-precio="${producto.precio.toFixed(2)}" data-marca="${marca}"
+                        data-imagen="Imagenes/${escaparHtml(producto.imagen)}"
+                        data-stock="${producto.stock}">
                     <i class="bi bi-cart-plus me-1"></i>${agotado ? "Agotado" : "Agregar al carrito"}
                 </button>
             </div>

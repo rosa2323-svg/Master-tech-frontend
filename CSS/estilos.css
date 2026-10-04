@@ -66,6 +66,37 @@ body {
     background-color: var(--color-primario) !important;
 }
 
+/*Jerarquía visual*/
+
+h1 { font-size: var(--fs-h1); font-weight: var(--fw-medium); }
+h2 { font-size: var(--fs-h2); font-weight: var(--fw-medium); }
+h3 { font-size: var(--fs-h3); font-weight: var(--fw-medium); }
+h4 { font-size: var(--fs-h4); font-weight: var(--fw-medium); }
+h5 { font-size: var(--fs-h5); font-weight: var(--fw-medium); }
+h6 { font-size: var(--fs-h6); font-weight: var(--fw-medium); }
+
+.subtitulo-mastertech {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-regular);
+    color: var(--color-gris);
+}
+
+/*Llamado a la acción*/
+
+.btn-mastertech {
+    background-color: var(--color-secundario);
+    border: none;
+    color: var(--color-claro);
+    font-weight: var(--fw-medium);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-mastertech:hover {
+    background-color: var(--color-hover);
+    color: var(--color-claro);
+    transform: translateY(-2px);
+}
+
 /*Barra de Navegación*/
 
 .navbar .bi {

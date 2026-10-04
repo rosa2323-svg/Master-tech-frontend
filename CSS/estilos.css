@@ -199,7 +199,7 @@ footer h4, footer h6 {
 
 /*Media Queries en Moviles*/
 
-@media (max-width: 991.98px) {
+@media (max-width: 1199.98px) {
     .navbar-collapse {
         background-color: var(--color-oscuro);
         border-radius: 8px;

@@ -226,6 +226,34 @@ footer h4, footer h6 {
     }
 }
 
+/*  CARRITO */
+.cart-img {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #f8f8f8;
+    padding: 4px;
+}
+
+.qty-input {
+    width: 60px;
+    text-align: center;
+}
+
+.btn-eliminar {
+    background: transparent;
+    border: none;
+    color: #cc0000;
+    font-size: 1.2rem;
+    transition: color .2s;
+}
+
+.btn-eliminar:hover { color: #8b0000; }
+
+.empty-cart { text-align: center; padding: 80px 20px; color: #888; }
+.empty-cart i { font-size: 72px; }
+
 /* TARJETAS DE PRODUCTO */
 .tarjeta-producto {
     display: flex;
@@ -323,3 +351,4 @@ footer h4, footer h6 {
     .tarjeta-producto-nombre { font-size: 13px; min-height: 38px; }
     .tarjeta-producto-precio { font-size: 17px; }
 }
+

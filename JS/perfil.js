@@ -123,3 +123,69 @@ function renderizarOrdenes(lista) {
 document.addEventListener("DOMContentLoaded", () => {
     renderizarOrdenes(ordenes);
 });
+// ===== Datos personales (simulación con localStorage) =====
+// Cuando exista el backend, obtenerPerfil() y guardarPerfil()
+// se reemplazan por llamadas al servidor.
+const CLAVE_PERFIL = "mastertech_perfil";
+
+function obtenerPerfil() {
+    try {
+        const guardado = localStorage.getItem(CLAVE_PERFIL);
+        return guardado ? JSON.parse(guardado) : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+function guardarPerfil(datos) {
+    try {
+        localStorage.setItem(CLAVE_PERFIL, JSON.stringify(datos));
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+function cargarFormularioPerfil() {
+    const datos = obtenerPerfil();
+    if (!datos) return;
+
+    document.getElementById("inputNombre").value = datos.nombre || "";
+    document.getElementById("inputDireccion").value = datos.direccion || "";
+    document.getElementById("inputTelefono").value = datos.telefono || "";
+}
+
+function mostrarMensajeGuardado() {
+    const mensaje = document.getElementById("mensajeGuardado");
+    mensaje.classList.remove("d-none");
+    setTimeout(() => mensaje.classList.add("d-none"), 3000);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("formPerfil");
+    if (!form) return;
+
+    cargarFormularioPerfil();
+
+    form.addEventListener("submit", (evento) => {
+        evento.preventDefault();
+
+        if (!form.checkValidity()) {
+            form.classList.add("was-validated");
+            return;
+        }
+
+        const datos = {
+            nombre: document.getElementById("inputNombre").value.trim(),
+            direccion: document.getElementById("inputDireccion").value.trim(),
+            telefono: document.getElementById("inputTelefono").value.trim()
+        };
+
+        if (guardarPerfil(datos)) {
+            form.classList.remove("was-validated");
+            mostrarMensajeGuardado();
+        } else {
+            alert("No se pudieron guardar los datos en este navegador.");
+        }
+    });
+});

@@ -229,6 +229,33 @@ footer h4, footer h6 {
     }
 }
 
+/*Estados focus y active*/
+
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+.form-control:focus-visible,
+.nav-link:focus-visible,
+.form-check-input:focus-visible {
+    outline: 3px solid var(--color-secundario);
+    outline-offset: 2px;
+}
+
+.navbar :focus-visible,
+footer :focus-visible,
+#promoModal :focus-visible {
+    outline-color: var(--color-claro);
+}
+
+.btn:active,
+.btn-mastertech:active {
+    transform: translateY(1px) scale(0.98);
+}
+
+.product-card:active {
+    transform: translateY(-2px);
+}
+
 /*Media Queries en Moviles*/
 
 @media (max-width: 991.98px) {

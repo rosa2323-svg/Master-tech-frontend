@@ -1,5 +1,13 @@
 // Órdenes de ejemplo (simulación). Cuando exista el backend,
 // este arreglo se reemplaza por los datos que devuelva el servidor.
+function escaparHtml(valor) {
+    return String(valor)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
 const ordenes = [
     {
         numero: "MT-000123",
@@ -52,10 +60,10 @@ function crearOrden(orden, indice) {
 
     const filas = orden.detalles.map(d => `
         <tr>
-            <td>${d.producto}</td>
-            <td class="text-center">${d.cantidad}</td>
-            <td class="text-end">${formatearSoles(d.precio)}</td>
-            <td class="text-end">${formatearSoles(d.cantidad * d.precio)}</td>
+            <td>${escaparHtml(d.producto)}</td>
+            <td class="text-center">${escaparHtml(d.cantidad)}</td>
+            <td class="text-end">${escaparHtml(formatearSoles(d.precio))}</td>
+            <td class="text-end">${escaparHtml(formatearSoles(d.cantidad * d.precio))}</td>
         </tr>
     `).join("");
 
@@ -68,12 +76,12 @@ function crearOrden(orden, indice) {
                         data-bs-target="#${id}" aria-expanded="false" aria-controls="${id}">
                     <div class="d-flex flex-column flex-md-row w-100 justify-content-between align-items-md-center me-3 gap-2">
                         <div>
-                            <span class="fw-bold">${orden.numero}</span>
-                            <span class="text-muted small ms-2">${orden.fecha}</span>
+                            <span class="fw-bold">${escaparHtml(orden.numero)}</span>
+                            <span class="text-muted small ms-2">${escaparHtml(orden.fecha)}</span>
                         </div>
                         <div>
-                            <span class="badge ${claseBadge} me-3">${orden.estado}</span>
-                            <span class="fw-bold">${total}</span>
+                            <span class="badge ${claseBadge} me-3">${escaparHtml(orden.estado)}</span>
+                            <span class="fw-bold">${escaparHtml(total)}</span>
                         </div>
                     </div>
                 </button>
@@ -94,7 +102,7 @@ function crearOrden(orden, indice) {
                             <tfoot>
                                 <tr>
                                     <td colspan="3" class="text-end fw-bold">Total</td>
-                                    <td class="text-end fw-bold text-danger">${total}</td>
+                                    <td class="text-end fw-bold text-danger">${escaparHtml(total)}</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -169,6 +177,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     form.addEventListener("submit", (evento) => {
         evento.preventDefault();
+
+        ["inputNombre", "inputDireccion", "inputTelefono"].forEach((id) => {
+            const campo = document.getElementById(id);
+            campo.value = campo.value.trim();
+        });
 
         if (!form.checkValidity()) {
             form.classList.add("was-validated");

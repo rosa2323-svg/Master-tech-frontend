@@ -1,19 +1,100 @@
 /*Variables Globales*/
 
 :root {
+    /* Primarios */
     --color-primario: #1a0b3d;
+
+    /* Secundarios */
     --color-secundario: #cc0000;
     --color-hover: #ff0000;
+
+    /* Neutros */
     --color-oscuro: #000000;
     --color-claro: #ffffff;
     --color-gris: #9ca3af;
+    --color-gris-claro: #aaaaaa;
+    --color-gris-texto: #6c757d;
+    --color-fondo-footer: #0a0a0a;
+
+    /* Tipografía */
     --fuente-principal: 'Segoe UI', Roboto, sans-serif;
+
+    /* Tamaños de fuente */
+    --fs-base: 1rem;
+    --fs-lg: 1.25rem;
+    --fs-xl: 1.4rem;
+    --fs-2xl: 1.8rem;
+
+    /* Tamaños de títulos */
+    --fs-h1: calc(1.375rem + 1.5vw);
+    --fs-h2: calc(1.325rem + 0.9vw);
+    --fs-h3: calc(1.3rem + 0.6vw);
+    --fs-h4: calc(1.275rem + 0.3vw);
+    --fs-h5: 1.25rem;
+    --fs-h6: 1rem;
+
+    /* Pesos */
+    --fw-regular: 400;
+    --fw-medium: 500;
+    --fw-bold: 700;
+}
+
+@media (min-width: 1200px) {
+    :root {
+        --fs-h1: 2.5rem;
+        --fs-h2: 2rem;
+        --fs-h3: 1.75rem;
+        --fs-h4: 1.5rem;
+    }
 }
 
 body {
     background-color: var(--color-claro);
     color: var(--color-oscuro);
     font-family: var(--fuente-principal);
+    font-size: var(--fs-base);
+    font-weight: var(--fw-regular);
+}
+
+/*Utilidades Master Tech*/
+
+.text-mastertech {
+    color: var(--color-secundario) !important;
+}
+
+.bg-mastertech {
+    background-color: var(--color-primario) !important;
+}
+
+/*Jerarquía visual*/
+
+h1 { font-size: var(--fs-h1); font-weight: var(--fw-medium); }
+h2 { font-size: var(--fs-h2); font-weight: var(--fw-medium); }
+h3 { font-size: var(--fs-h3); font-weight: var(--fw-medium); }
+h4 { font-size: var(--fs-h4); font-weight: var(--fw-medium); }
+h5 { font-size: var(--fs-h5); font-weight: var(--fw-medium); }
+h6 { font-size: var(--fs-h6); font-weight: var(--fw-medium); }
+
+.subtitulo-mastertech {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-regular);
+    color: var(--color-gris);
+}
+
+/*Llamado a la acción*/
+
+.btn-mastertech {
+    background-color: var(--color-secundario);
+    border: none;
+    color: var(--color-claro);
+    font-weight: var(--fw-medium);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-mastertech:hover {
+    background-color: var(--color-hover);
+    color: var(--color-claro);
+    transform: translateY(-2px);
 }
 
 /*Barra de Navegación*/
@@ -62,7 +143,7 @@ body {
 /*Footer*/
 
 footer {
-    background: linear-gradient(180deg, var(--color-oscuro) 0%, #0a0a0a 100%);
+    background: linear-gradient(180deg, var(--color-oscuro) 0%, var(--color-fondo-footer) 100%);
 }
 
 footer a {
@@ -74,7 +155,7 @@ footer a:hover {
 }
 
 .footer-link {
-    color: #aaa;
+    color: var(--color-gris-claro);
     text-decoration: none;
     transition: all 0.3s ease;
 }
@@ -142,7 +223,7 @@ footer h4, footer h6 {
 
 #registro-main .form-control::placeholder,
 #loginModal .form-control::placeholder {
-    color: #6c757d;
+    color: var(--color-gris-texto);
 }
 
 #registro-main .form-control:focus,
@@ -221,15 +302,15 @@ footer h4, footer h6 {
 
 @media (max-width: 576px) {
     .display-5 {
-        font-size: 1.8rem;
+        font-size: var(--fs-2xl);
     }
 
     .display-6 {
-        font-size: 1.4rem;
+        font-size: var(--fs-xl);
     }
 
     .lead {
-        font-size: 1rem;
+        font-size: var(--fs-base);
     }
 
     .product-card .card-body {

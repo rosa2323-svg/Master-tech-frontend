@@ -186,6 +186,17 @@ footer h4, footer h6 {
     transform: translateY(-2px);
 }
 
+/*Transiciones fluidas*/
+
+.product-card,
+.btn,
+.btn-mastertech,
+#registro-main .btn-danger,
+#loginModal .btn-danger,
+#promoModal .btn-danger {
+    transition: all 0.3s ease;
+}
+
 /*Media Queries en Moviles*/
 
 @media (max-width: 991.98px) {

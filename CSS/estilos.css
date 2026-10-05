@@ -278,6 +278,84 @@ footer h4, footer h6 {
     transform: translateY(-2px);
 }
 
+/*Transiciones fluidas*/
+
+.product-card,
+.btn,
+.btn-mastertech,
+#registro-main .btn-danger,
+#loginModal .btn-danger,
+#promoModal .btn-danger {
+    transition: all 0.3s ease;
+}
+
+/*Animaciones de entrada*/
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.modal.show .modal-dialog {
+    animation: slideUp 0.4s ease both;
+}
+
+.modal-backdrop.show {
+    animation: fadeIn 0.3s ease both;
+}
+
+.alert {
+    animation: slideUp 0.4s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .modal.show .modal-dialog,
+    .modal-backdrop.show,
+    .alert {
+        animation: none;
+    }
+}
+
+/*Estados focus y active*/
+
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+.form-control:focus-visible,
+.nav-link:focus-visible,
+.form-check-input:focus-visible {
+    outline: 3px solid var(--color-secundario);
+    outline-offset: 2px;
+}
+
+.navbar :focus-visible,
+footer :focus-visible,
+#promoModal :focus-visible {
+    outline-color: var(--color-claro);
+}
+
+.btn:active,
+.btn-mastertech:active {
+    transform: translateY(1px) scale(0.98);
+}
+
+.product-card:active {
+    transform: translateY(-2px);
+}
+
+/*Contraste de texto y botones*/
+
+#promoModal .btn-danger:hover,
+.btn-mastertech:hover {
+    background-color: #d90000;
+    color: var(--color-claro);
+}
+
 /*Media Queries en Moviles*/
 
 @media (max-width: 1199.98px) {

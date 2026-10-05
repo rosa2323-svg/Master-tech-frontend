@@ -256,6 +256,14 @@ footer :focus-visible,
     transform: translateY(-2px);
 }
 
+/*Contraste de texto y botones*/
+
+#promoModal .btn-danger:hover,
+.btn-mastertech:hover {
+    background-color: #d90000;
+    color: var(--color-claro);
+}
+
 /*Media Queries en Moviles*/
 
 @media (max-width: 991.98px) {

@@ -1,5 +1,5 @@
 // Catalogo local inicial. Categorias = las del navbar: laptops, telefonos, accesorios, componentes.
-const productos = [
+const PRODUCTOS_INICIALES = [
     { id: 1,  nombre: "Laptop Gamer 15.6\"",        marca: "Lenovo", categoria: "laptops",     precio: 3299.00, stock: 6,  imagen: "laptoppromo.jpeg",
         especificaciones: { "Pantalla": "15.6\" FHD 144Hz", "Procesador": "AMD Ryzen", "Memoria RAM": "16GB", "Almacenamiento": "512GB SSD", "Gráficos": "NVIDIA GeForce RTX 4050 6GB" } },
     { id: 2,  nombre: "PC de Escritorio Ryzen 5",   marca: "Master Tech", categoria: "laptops",     precio: 2899.00, stock: 4,  imagen: "pcpromo.jpg",
@@ -17,3 +17,14 @@ const productos = [
     { id: 8,  nombre: "Kit de Componentes PC",      marca: "AMD", categoria: "componentes", precio: 1299.00, stock: 8,  imagen: "componentesicon.jpeg",
         especificaciones: { "Tipo": "Kit para armado de PC", "Garantía": "12 meses" } }
 ];
+
+// Si el admin ya guardó cambios, la tienda lee ese catálogo; si no, usa el inicial.
+const CLAVE_PRODUCTOS = "mastertech_productos";
+const productos = (() => {
+    try {
+        const guardado = JSON.parse(localStorage.getItem(CLAVE_PRODUCTOS));
+        return Array.isArray(guardado) ? guardado : PRODUCTOS_INICIALES;
+    } catch {
+        return PRODUCTOS_INICIALES;
+    }
+})();

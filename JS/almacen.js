@@ -1,7 +1,3 @@
-// Capa de datos del admin. No toca el DOM.
-// Al migrar a React: reemplaza el cuerpo de estas funciones por fetch a la API o por un store,
-// manteniendo los mismos nombres y valores de retorno.
-// Requiere productos.js cargado antes (CLAVE_PRODUCTOS y PRODUCTOS_INICIALES).
 
 const CLAVE_CATEGORIAS = "mastertech_categorias";
 const UMBRAL_STOCK_BAJO = 5;

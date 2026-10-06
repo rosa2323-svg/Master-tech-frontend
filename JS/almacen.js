@@ -1,3 +1,7 @@
+/**
+ * Almacén de datos local.
+ * @module almacen
+ */
 
 const CLAVE_CATEGORIAS = "mastertech_categorias";
 const UMBRAL_STOCK_BAJO = 5;

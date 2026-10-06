@@ -153,7 +153,7 @@
     });
 
     document.querySelectorAll("th.ordenable").forEach(th => {
-        th.addEventListener("click", () => {
+        th.querySelector(".btn-orden").addEventListener("click", () => {
             if (estado.columna === th.dataset.col) {
                 estado.direccion = estado.direccion === "asc" ? "desc" : "asc";
             } else {

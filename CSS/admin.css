@@ -80,11 +80,24 @@
 .tabla-admin tbody tr:hover { background: #faf8ff; }
 .tabla-admin .fila-agotada { background: #fff5f5; }
 
-.tabla-admin th.ordenable { cursor: pointer; user-select: none; transition: background-color 0.2s; }
+.tabla-admin th.ordenable { padding: 0; user-select: none; transition: background-color 0.2s; }
 .tabla-admin th.ordenable:hover { background: rgba(255, 255, 255, 0.1); }
+.btn-orden {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.btn-orden:focus-visible { outline: 2px solid var(--color-claro); outline-offset: -4px; }
 .icono-orden { margin-left: 6px; font-size: 0.75rem; opacity: 0.6; }
 .tabla-admin th.orden-activo .icono-orden { opacity: 1; color: #ff8080; }
-.tabla-admin th.ordenable:focus-visible { outline: 2px solid var(--color-claro); outline-offset: -4px; }
 
 .texto-tenue { color: var(--color-gris-texto); }
 .precio-admin { font-weight: var(--fw-bold); white-space: nowrap; }

@@ -1,19 +1,100 @@
 /*Variables Globales*/
 
 :root {
+    /* Primarios */
     --color-primario: #1a0b3d;
+
+    /* Secundarios */
     --color-secundario: #cc0000;
     --color-hover: #ff0000;
+
+    /* Neutros */
     --color-oscuro: #000000;
     --color-claro: #ffffff;
     --color-gris: #9ca3af;
+    --color-gris-claro: #aaaaaa;
+    --color-gris-texto: #6c757d;
+    --color-fondo-footer: #0a0a0a;
+
+    /* Tipografía */
     --fuente-principal: 'Segoe UI', Roboto, sans-serif;
+
+    /* Tamaños de fuente */
+    --fs-base: 1rem;
+    --fs-lg: 1.25rem;
+    --fs-xl: 1.4rem;
+    --fs-2xl: 1.8rem;
+
+    /* Tamaños de títulos */
+    --fs-h1: calc(1.375rem + 1.5vw);
+    --fs-h2: calc(1.325rem + 0.9vw);
+    --fs-h3: calc(1.3rem + 0.6vw);
+    --fs-h4: calc(1.275rem + 0.3vw);
+    --fs-h5: 1.25rem;
+    --fs-h6: 1rem;
+
+    /* Pesos */
+    --fw-regular: 400;
+    --fw-medium: 500;
+    --fw-bold: 700;
+}
+
+@media (min-width: 1200px) {
+    :root {
+        --fs-h1: 2.5rem;
+        --fs-h2: 2rem;
+        --fs-h3: 1.75rem;
+        --fs-h4: 1.5rem;
+    }
 }
 
 body {
     background-color: var(--color-claro);
     color: var(--color-oscuro);
     font-family: var(--fuente-principal);
+    font-size: var(--fs-base);
+    font-weight: var(--fw-regular);
+}
+
+/*Utilidades Master Tech*/
+
+.text-mastertech {
+    color: var(--color-secundario) !important;
+}
+
+.bg-mastertech {
+    background-color: var(--color-primario) !important;
+}
+
+/*Jerarquía visual*/
+
+h1 { font-size: var(--fs-h1); font-weight: var(--fw-medium); }
+h2 { font-size: var(--fs-h2); font-weight: var(--fw-medium); }
+h3 { font-size: var(--fs-h3); font-weight: var(--fw-medium); }
+h4 { font-size: var(--fs-h4); font-weight: var(--fw-medium); }
+h5 { font-size: var(--fs-h5); font-weight: var(--fw-medium); }
+h6 { font-size: var(--fs-h6); font-weight: var(--fw-medium); }
+
+.subtitulo-mastertech {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-regular);
+    color: var(--color-gris);
+}
+
+/*Llamado a la acción*/
+
+.btn-mastertech {
+    background-color: var(--color-secundario);
+    border: none;
+    color: var(--color-claro);
+    font-weight: var(--fw-medium);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-mastertech:hover {
+    background-color: var(--color-hover);
+    color: var(--color-claro);
+    transform: translateY(-2px);
 }
 
 /*Barra de Navegación*/
@@ -38,20 +119,31 @@ body {
     color: var(--color-hover) !important;
 }
 
-/* Menú hamburguesa en mayores dispositivos */
+/* Menú hamburguesa */
 @media (min-width: 992px) and (max-width: 1199.98px) {
-    .navbar-expand-lg .navbar-collapse {
-        display: none !important;
+    .navbar-expand-lg > .container {
+        flex-wrap: wrap;
     }
     .navbar-expand-lg .navbar-toggler {
         display: block !important;
+    }
+    .navbar-expand-lg .navbar-collapse {
+        display: none !important;
+        flex-basis: 100%;
+    }
+    .navbar-expand-lg .navbar-collapse.show,
+    .navbar-expand-lg .navbar-collapse.collapsing {
+        display: block !important;
+    }
+    .navbar-expand-lg .navbar-nav {
+        flex-direction: column;
     }
 }
 
 /*Footer*/
 
 footer {
-    background: linear-gradient(180deg, var(--color-oscuro) 0%, #0a0a0a 100%);
+    background: linear-gradient(180deg, var(--color-oscuro) 0%, var(--color-fondo-footer) 100%);
 }
 
 footer a {
@@ -63,7 +155,7 @@ footer a:hover {
 }
 
 .footer-link {
-    color: #aaa;
+    color: var(--color-gris-claro);
     text-decoration: none;
     transition: all 0.3s ease;
 }
@@ -131,7 +223,7 @@ footer h4, footer h6 {
 
 #registro-main .form-control::placeholder,
 #loginModal .form-control::placeholder {
-    color: #6c757d;
+    color: var(--color-gris-texto);
 }
 
 #registro-main .form-control:focus,
@@ -186,9 +278,87 @@ footer h4, footer h6 {
     transform: translateY(-2px);
 }
 
+/*Transiciones fluidas*/
+
+.product-card,
+.btn,
+.btn-mastertech,
+#registro-main .btn-danger,
+#loginModal .btn-danger,
+#promoModal .btn-danger {
+    transition: all 0.3s ease;
+}
+
+/*Animaciones de entrada*/
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.modal.show .modal-dialog {
+    animation: slideUp 0.4s ease both;
+}
+
+.modal-backdrop.show {
+    animation: fadeIn 0.3s ease both;
+}
+
+.alert {
+    animation: slideUp 0.4s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .modal.show .modal-dialog,
+    .modal-backdrop.show,
+    .alert {
+        animation: none;
+    }
+}
+
+/*Estados focus y active*/
+
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+.form-control:focus-visible,
+.nav-link:focus-visible,
+.form-check-input:focus-visible {
+    outline: 3px solid var(--color-secundario);
+    outline-offset: 2px;
+}
+
+.navbar :focus-visible,
+footer :focus-visible,
+#promoModal :focus-visible {
+    outline-color: var(--color-claro);
+}
+
+.btn:active,
+.btn-mastertech:active {
+    transform: translateY(1px) scale(0.98);
+}
+
+.product-card:active {
+    transform: translateY(-2px);
+}
+
+/*Contraste de texto y botones*/
+
+#promoModal .btn-danger:hover,
+.btn-mastertech:hover {
+    background-color: #d90000;
+    color: var(--color-claro);
+}
+
 /*Media Queries en Moviles*/
 
-@media (max-width: 991.98px) {
+@media (max-width: 1199.98px) {
     .navbar-collapse {
         background-color: var(--color-oscuro);
         border-radius: 8px;
@@ -210,18 +380,168 @@ footer h4, footer h6 {
 
 @media (max-width: 576px) {
     .display-5 {
-        font-size: 1.8rem;
+        font-size: var(--fs-2xl);
     }
 
     .display-6 {
-        font-size: 1.4rem;
+        font-size: var(--fs-xl);
     }
 
     .lead {
-        font-size: 1rem;
+        font-size: var(--fs-base);
     }
 
     .product-card .card-body {
         padding: 1rem !important;
     }
+}
+
+/*  CARRITO */
+.cart-img {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #f8f8f8;
+    padding: 4px;
+}
+
+.qty-input {
+    width: 60px;
+    text-align: center;
+}
+
+.btn-eliminar {
+    background: transparent;
+    border: none;
+    color: #cc0000;
+    font-size: 1.2rem;
+    transition: color .2s;
+}
+
+.btn-eliminar:hover { color: #8b0000; }
+
+.empty-cart { text-align: center; padding: 80px 20px; color: #888; }
+.empty-cart i { font-size: 72px; }
+
+
+.resumen-card {
+    border: none;
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.10);
+    background: #fff;
+}
+
+.btn-comprar {
+    background: #1a0b3d;
+    color: #fff;
+    font-weight: 700;
+    border-radius: 10px;
+    letter-spacing: 0.5px;
+    transition: background .2s;
+}
+
+.btn-comprar:hover { background: #cc0000; color: #fff; }
+
+/* TARJETAS DE PRODUCTO */
+.tarjeta-producto {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #ffffff;
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    -webkit-transition: -webkit-transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.tarjeta-producto:hover {
+    -webkit-transform: translateY(-5px);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
+}
+
+/* Contenedor de imagen: tamano fijo, la foto se ajusta sin deformarse */
+.tarjeta-producto-img {
+    width: 100%;
+    height: 200px;
+    padding: 10px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #ffffff;
+    border-radius: 10px;
+}
+
+.tarjeta-producto-img img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
+.tarjeta-producto-marca {
+    align-self: flex-start;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: #1a0b3d;
+    color: #ffffff;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+.tarjeta-producto-nombre {
+    min-height: 45px;
+    margin: 8px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #000000;
+}
+
+.tarjeta-producto-precio {
+    font-size: 20px;
+    font-weight: bold;
+    color: #000000;
+}
+
+.btn-agregar {
+    width: 100%;
+    margin-top: auto;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #1a0b3d;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: background 0.2s;
+}
+
+.btn-agregar:hover:not(:disabled) {
+    background: #cc0000;
+    color: #ffffff;
+}
+
+.btn-agregar:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .tarjeta-producto { padding: 10px; }
+    .tarjeta-producto-img { height: 140px; }
+    .tarjeta-producto-nombre { font-size: 13px; min-height: 38px; }
+    .tarjeta-producto-precio { font-size: 17px; }
+}
+
+.navbar-nav .nav-link.active {
+    color: var(--color-claro);
+    border-bottom: 2px solid var(--color-secundario);
 }

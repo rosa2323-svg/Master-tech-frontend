@@ -1,7 +1,3 @@
-/**
- * Almacén de datos local.
- * @module almacen
- */
 
 const CLAVE_CATEGORIAS = "mastertech_categorias";
 const UMBRAL_STOCK_BAJO = 5;
@@ -66,4 +62,47 @@ function calcularMetricas(lista) {
 
 function obtenerCategorias() {
     return leerLista(CLAVE_CATEGORIAS, CATEGORIAS_INICIALES);
+}
+
+function contarProductosPorCategoria(slug) {
+    return obtenerProductos().filter(p => p.categoria === slug).length;
+}
+
+function crearSlug(texto) {
+    return texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+// Devuelve { ok, error }. El slug no cambia al editar para no romper productos ni enlaces.
+function crearCategoria({ nombre, descripcion }) {
+    const lista = obtenerCategorias();
+    const slug = crearSlug(nombre);
+    if (!slug) return { ok: false, error: "Escribe un nombre válido." };
+    if (lista.some(c => c.slug === slug)) return { ok: false, error: "Ya existe una categoría con ese nombre." };
+    lista.push({ id: siguienteId(lista), slug, nombre, descripcion });
+    guardarLista(CLAVE_CATEGORIAS, lista);
+    return { ok: true };
+}
+
+function actualizarCategoria(id, { nombre, descripcion }) {
+    const lista = obtenerCategorias();
+    const slugNuevo = crearSlug(nombre);
+    if (!slugNuevo) return { ok: false, error: "Escribe un nombre válido." };
+    if (lista.some(c => c.id !== id && crearSlug(c.nombre) === slugNuevo)) {
+        return { ok: false, error: "Ya existe una categoría con ese nombre." };
+    }
+    guardarLista(CLAVE_CATEGORIAS, lista.map(c => (c.id === id ? { ...c, nombre, descripcion } : c)));
+    return { ok: true };
+}
+
+function eliminarCategoria(id) {
+    const lista = obtenerCategorias();
+    const categoria = lista.find(c => c.id === id);
+    if (!categoria) return { ok: false, error: "La categoría no existe." };
+    const cantidad = contarProductosPorCategoria(categoria.slug);
+    if (cantidad > 0) {
+        return { ok: false, error: `No se puede eliminar "${categoria.nombre}": tiene ${cantidad} producto(s) asociado(s).` };
+    }
+    guardarLista(CLAVE_CATEGORIAS, lista.filter(c => c.id !== id));
+    return { ok: true };
 }

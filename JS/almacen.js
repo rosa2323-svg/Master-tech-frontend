@@ -86,6 +86,9 @@ function crearCategoria({ nombre, descripcion }) {
 
 function actualizarCategoria(id, { nombre, descripcion }) {
     const lista = obtenerCategorias();
+    if (!lista.some(c => c.id === id)) {
+        return { ok: false, error: "La categoría no existe." };
+    }
     const slugNuevo = crearSlug(nombre);
     if (!slugNuevo) return { ok: false, error: "Escribe un nombre válido." };
     if (lista.some(c => c.id !== id && crearSlug(c.nombre) === slugNuevo)) {

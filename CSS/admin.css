@@ -1,0 +1,150 @@
+/* Panel admin Master Tech. Usa las variables de estilos.css (cargarlo antes). */
+
+/* Navegación */
+.admin-barra { padding: 0.75rem 1rem; }
+.admin-enlaces { display: flex; gap: 1.25rem; }
+.admin-enlaces .nav-link {
+    color: var(--color-gris-claro);
+    padding: 0.25rem 0;
+    transition: color 0.3s ease;
+}
+.admin-enlaces .nav-link:hover { color: var(--color-hover); }
+.admin-enlaces .nav-link.active {
+    color: var(--color-claro);
+    border-bottom: 2px solid var(--color-secundario);
+}
+
+/* Estructura */
+.admin-principal { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem 3rem; }
+
+.admin-encabezado {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.admin-titulo { margin: 0; font-weight: var(--fw-bold); color: var(--color-primario); }
+.admin-subtitulo { margin: 0.25rem 0 0; color: var(--color-gris-texto); font-size: 0.95rem; }
+
+/* Métricas */
+.tarjetas-metricas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.tarjeta-metrica {
+    background: var(--color-claro);
+    border: 1px solid #e9ecef;
+    border-left: 4px solid var(--color-primario);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+.metrica-etiqueta { font-size: 0.85rem; color: var(--color-gris-texto); }
+.metrica-valor { font-size: 1.7rem; font-weight: var(--fw-bold); white-space: nowrap; }
+.metrica-valor.principal { color: var(--color-secundario); }
+.metrica-valor.alerta { color: #b45309; }
+
+/* Herramientas */
+.barra-herramientas { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem; }
+.barra-herramientas .form-control { flex: 1; min-width: 220px; }
+.barra-herramientas .btn-outline-warning { color: #b45309; border-color: #d97706; }
+.barra-herramientas .btn-outline-warning:hover,
+.barra-herramientas .btn-outline-warning.activo {
+    background: #fef3c7;
+    color: #92400e;
+    border-color: #d97706;
+}
+
+/* Tabla */
+.tabla-envoltorio {
+    background: var(--color-claro);
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    overflow-x: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+.tabla-admin { width: 100%; min-width: 720px; border-collapse: collapse; }
+.tabla-admin thead { background: var(--color-primario); color: var(--color-claro); }
+.tabla-admin th {
+    padding: 0.85rem 1rem;
+    font-size: 0.9rem;
+    font-weight: var(--fw-medium);
+    text-align: left;
+    white-space: nowrap;
+}
+.tabla-admin td { padding: 0.8rem 1rem; border-top: 1px solid #f0f0f0; vertical-align: middle; }
+.tabla-admin tbody tr:hover { background: #faf8ff; }
+.tabla-admin .fila-agotada { background: #fff5f5; }
+
+.tabla-admin th.ordenable { padding: 0; user-select: none; transition: background-color 0.2s; }
+.tabla-admin th.ordenable:hover { background: rgba(255, 255, 255, 0.1); }
+.btn-orden {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.btn-orden:focus-visible { outline: 2px solid var(--color-claro); outline-offset: -4px; }
+.icono-orden { margin-left: 6px; font-size: 0.75rem; opacity: 0.6; }
+.tabla-admin th.orden-activo .icono-orden { opacity: 1; color: #ff8080; }
+
+.texto-tenue { color: var(--color-gris-texto); }
+.precio-admin { font-weight: var(--fw-bold); white-space: nowrap; }
+.celda-acciones { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.etiqueta-categoria {
+    display: inline-block;
+    padding: 0.2rem 0.7rem;
+    border-radius: 100px;
+    background: rgba(26, 11, 61, 0.08);
+    color: var(--color-primario);
+    font-size: 0.8rem;
+    font-weight: var(--fw-medium);
+}
+
+/* Botones de acción */
+.btn-accion {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.75rem;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    font-size: 0.85rem;
+    font-weight: var(--fw-medium);
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+.btn-editar { color: var(--color-primario); border-color: rgba(26, 11, 61, 0.3); }
+.btn-editar:hover { background: var(--color-primario); color: var(--color-claro); }
+.btn-borrar { color: var(--color-secundario); border-color: rgba(204, 0, 0, 0.3); }
+.btn-borrar:hover { background: var(--color-secundario); color: var(--color-claro); }
+
+/* Estado vacío */
+.vacio { padding: 3.5rem 1rem; text-align: center; color: var(--color-gris-texto); }
+.vacio .bi { display: block; margin-bottom: 0.75rem; font-size: 2.5rem; opacity: 0.4; }
+
+/* Formularios en modal */
+.modal .form-control:focus,
+.modal .form-select:focus,
+.barra-herramientas .form-control:focus {
+    border-color: var(--color-secundario);
+    box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.2);
+}
+
+@media (max-width: 576px) {
+    .admin-encabezado { align-items: flex-start; }
+    .admin-encabezado .btn { width: 100%; }
+}

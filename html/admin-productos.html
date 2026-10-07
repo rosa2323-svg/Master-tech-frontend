@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MASTER TECH | Admin de productos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../CSS/estilos.css">
+    <link rel="stylesheet" href="../CSS/admin.css">
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark admin-barra">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="../index.html"><i class="bi bi-house-fill me-2"></i>MASTER TECH</a>
+        <div class="admin-enlaces">
+            <a class="nav-link active" href="admin-productos.html" aria-current="page"><i class="bi bi-box-seam"></i> Productos</a>
+        </div>
+    </div>
+</nav>
+
+<main class="admin-principal">
+    <div class="admin-encabezado">
+        <div>
+            <h1 class="admin-titulo">Gestión de productos</h1>
+            <p class="admin-subtitulo">Administra el catálogo, el stock y el valor del inventario.</p>
+        </div>
+        <button type="button" id="btnNuevoProducto" class="btn btn-mastertech px-4">
+            <i class="bi bi-plus-lg me-1"></i>Nuevo producto
+        </button>
+    </div>
+
+    <div id="avisos"></div>
+
+    <section class="tarjetas-metricas" aria-label="Métricas del inventario">
+        <div class="tarjeta-metrica">
+            <div class="metrica-etiqueta">Total de productos</div>
+            <div class="metrica-valor principal" id="metricaTotal">0</div>
+        </div>
+        <div class="tarjeta-metrica">
+            <div class="metrica-etiqueta">Stock bajo (5 o menos)</div>
+            <div class="metrica-valor alerta" id="metricaStockBajo">0</div>
+        </div>
+        <div class="tarjeta-metrica">
+            <div class="metrica-etiqueta">Valor del inventario</div>
+            <div class="metrica-valor" id="metricaValor">S/ 0.00</div>
+        </div>
+    </section>
+
+    <div class="barra-herramientas">
+        <input type="search" id="buscador" class="form-control" placeholder="Buscar por nombre o marca" aria-label="Buscar productos">
+        <button type="button" id="btnStockBajo" class="btn btn-outline-warning" aria-pressed="false">
+            <i class="bi bi-exclamation-triangle me-1"></i>Solo stock bajo
+        </button>
+        <button type="button" id="btnLimpiar" class="btn btn-outline-secondary">
+            <i class="bi bi-x-lg me-1"></i>Limpiar
+        </button>
+    </div>
+
+    <div class="tabla-envoltorio">
+        <table class="tabla-admin">
+            <thead>
+            <tr>
+                <th class="ordenable" data-col="id" aria-sort="none"><button type="button" class="btn-orden">#<i class="bi bi-arrow-down-up icono-orden" aria-hidden="true"></i></button></th>
+                <th class="ordenable" data-col="nombre" aria-sort="none"><button type="button" class="btn-orden">Nombre<i class="bi bi-arrow-down-up icono-orden" aria-hidden="true"></i></button></th>
+                <th class="ordenable" data-col="marca" aria-sort="none"><button type="button" class="btn-orden">Marca<i class="bi bi-arrow-down-up icono-orden" aria-hidden="true"></i></button></th>
+                <th class="ordenable" data-col="categoria" aria-sort="none"><button type="button" class="btn-orden">Categoría<i class="bi bi-arrow-down-up icono-orden" aria-hidden="true"></i></button></th>
+                <th class="ordenable" data-col="precio" aria-sort="none"><button type="button" class="btn-orden">Precio<i class="bi bi-arrow-down-up icono-orden" aria-hidden="true"></i></button></th>
+                <th class="ordenable" data-col="stock" aria-sort="none"><button type="button" class="btn-orden">Inventario<i class="bi bi-arrow-down-up icono-orden" aria-hidden="true"></i></button></th>
+                <th>Acciones</th>
+            </tr>
+            </thead>
+            <tbody id="cuerpoTabla"></tbody>
+        </table>
+    </div>
+</main>
+
+<!-- Modal: alta y edición -->
+<div class="modal fade" id="modalProducto" tabindex="-1" aria-labelledby="tituloModalProducto" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" id="formProducto" novalidate>
+            <div class="modal-header">
+                <h5 class="modal-title" id="tituloModalProducto">Nuevo producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="productoId">
+                <div class="mb-3">
+                    <label class="form-label" for="productoNombre">Nombre</label>
+                    <input type="text" class="form-control" id="productoNombre" placeholder="Ej. Mouse Gamer RGB" required>
+                    <div class="invalid-feedback">Escribe el nombre del producto.</div>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-6">
+                        <label class="form-label" for="productoCategoria">Categoría</label>
+                        <select class="form-select" id="productoCategoria" required></select>
+                        <div class="invalid-feedback">Elige una categoría.</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="productoMarca">Marca</label>
+                        <input type="text" class="form-control" id="productoMarca" placeholder="Ej. Logitech" required>
+                        <div class="invalid-feedback">Escribe la marca.</div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="productoImagen">Imagen</label>
+                    <input type="text" class="form-control" id="productoImagen" placeholder="mouse2.jpg" required>
+                    <div class="form-text">Nombre del archivo dentro de la carpeta Imagenes.</div>
+                    <div class="invalid-feedback">Indica el nombre del archivo de imagen.</div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label class="form-label" for="productoPrecio">Precio (S/)</label>
+                        <input type="number" class="form-control" id="productoPrecio" min="0" step="0.01" placeholder="0.00" required>
+                        <div class="invalid-feedback">Ingresa un precio igual o mayor a 0.</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="productoStock">Inventario</label>
+                        <input type="number" class="form-control" id="productoStock" min="0" step="1" placeholder="0" required>
+                        <div class="invalid-feedback">Ingresa un stock entero igual o mayor a 0.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-mastertech px-4" id="btnGuardarProducto">
+                    <i class="bi bi-check-lg me-1"></i><span id="textoGuardarProducto">Crear producto</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: confirmar eliminación -->
+<div class="modal fade" id="modalEliminar" tabindex="-1" aria-labelledby="tituloModalEliminar" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tituloModalEliminar">Eliminar producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                Vas a eliminar <strong id="nombreProductoEliminar"></strong>. Esta acción no se puede deshacer.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmarEliminar">Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../JS/productos.js"></script>
+<script src="../JS/almacen.js"></script>
+<script src="../JS/renderizado.js"></script>
+<script src="../JS/admin-comun.js"></script>
+<script src="../JS/admin-productos.js"></script>
+</body>
+</html>

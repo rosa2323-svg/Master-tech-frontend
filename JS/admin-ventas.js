@@ -48,6 +48,7 @@
     }
 
     const estado = { texto: "", columna: "fecha", direccion: "desc" };
+    const abiertas = new Set(); // ids de las ventas con el detalle desplegado
 
     const cuerpo = document.getElementById("cuerpoTabla");
 
@@ -56,6 +57,15 @@
     const formatoFecha = iso => new Date(iso).toLocaleString("es-PE", {
         day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
     });
+
+    const plantilla = id => document.getElementById(id).content.firstElementChild.cloneNode(true);
+
+    // Rellena los elementos con data-campo usando textContent (no interpreta HTML)
+    function llenar(nodo, datos) {
+        Object.entries(datos).forEach(([campo, valor]) => {
+            nodo.querySelector(`[data-campo="${campo}"]`).textContent = valor;
+        });
+    }
 
     function valorColumna(v, col) {
         if (col === "items") return cantidadItems(v);
@@ -89,27 +99,74 @@
         });
     }
 
+    function crearFilaVenta(v) {
+        const abierta = abiertas.has(v.id);
+        const fila = plantilla("plantillaVenta");
+        llenar(fila, {
+            id: v.id,
+            fecha: formatoFecha(v.fecha),
+            cliente: v.cliente,
+            numeroOrden: v.numeroOrden,
+            estado: v.estado,
+            items: cantidadItems(v),
+            total: formatoSoles(v.total)
+        });
+        const boton = fila.querySelector("[data-accion='detalle']");
+        boton.dataset.id = v.id;
+        boton.setAttribute("aria-expanded", abierta);
+        boton.setAttribute("aria-controls", "detalle-" + v.id);
+        boton.title = (abierta ? "Ocultar" : "Ver") + " productos de la venta";
+        fila.querySelector("[data-campo='chevron']").className = "bi " + (abierta ? "bi-chevron-up" : "bi-chevron-down");
+        return fila;
+    }
+
+    function crearFilaDetalle(v) {
+        const fila = plantilla("plantillaDetalle");
+        fila.id = "detalle-" + v.id;
+        const lista = fila.querySelector("[data-campo='lista']");
+        v.detalles.forEach(d => {
+            const item = plantilla("plantillaProducto");
+            llenar(item, {
+                cantidad: d.cantidad + "x",
+                producto: d.producto,
+                unitario: d.cantidad > 1 ? "(" + formatoSoles(d.precioUnitario) + " c/u)" : "",
+                subtotal: formatoSoles(d.cantidad * d.precioUnitario)
+            });
+            lista.appendChild(item);
+        });
+        return fila;
+    }
+
+    function crearFilaVacia() {
+        const fila = plantilla("plantillaVacio");
+        llenar(fila, { mensaje: estado.texto ? "No hay ventas que coincidan." : "No hay ventas registradas." });
+        return fila;
+    }
+
     function pintarTabla() {
         const lista = ventasVisibles();
+        const filas = [];
         if (lista.length === 0) {
-            cuerpo.innerHTML = `<tr><td colspan="7"><div class="vacio"><i class="bi bi-inbox"></i>
-                ${estado.texto ? "No hay ventas que coincidan." : "No hay ventas registradas."}</div></td></tr>`;
+            filas.push(crearFilaVacia());
         } else {
-            cuerpo.innerHTML = lista.map(v => `
-                <tr>
-                    <td class="texto-tenue">${v.id}</td>
-                    <td>${formatoFecha(v.fecha)}</td>
-                    <td class="fw-semibold">${escaparHtml(v.cliente)}</td>
-                    <td class="texto-tenue">${escaparHtml(v.numeroOrden)}</td>
-                    <td><span class="etiqueta-categoria">${escaparHtml(v.estado)}</span></td>
-                    <td class="text-center">${cantidadItems(v)}</td>
-                    <td class="precio-admin">${formatoSoles(v.total)}</td>
-                </tr>`).join("");
+            lista.forEach(v => {
+                filas.push(crearFilaVenta(v));
+                if (abiertas.has(v.id)) filas.push(crearFilaDetalle(v));
+            });
         }
+        cuerpo.replaceChildren(...filas);
         pintarEncabezados();
     }
 
     // Eventos
+    cuerpo.addEventListener("click", e => {
+        const boton = e.target.closest("button[data-id]");
+        if (!boton) return;
+        const id = Number(boton.dataset.id);
+        if (abiertas.has(id)) abiertas.delete(id); else abiertas.add(id);
+        pintarTabla();
+    });
+
     document.querySelectorAll("th.ordenable").forEach(th => {
         th.querySelector(".btn-orden").addEventListener("click", () => {
             if (estado.columna === th.dataset.col) {

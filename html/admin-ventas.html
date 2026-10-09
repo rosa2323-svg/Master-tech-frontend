@@ -54,10 +54,55 @@
     </div>
 </main>
 
+<template id="plantillaVenta">
+    <tr>
+        <td class="texto-tenue" data-campo="id"></td>
+        <td data-campo="fecha"></td>
+        <td class="fw-semibold" data-campo="cliente"></td>
+        <td class="texto-tenue" data-campo="numeroOrden"></td>
+        <td><span class="etiqueta-categoria" data-campo="estado"></span></td>
+        <td class="text-center" data-campo="items"></td>
+        <td class="precio-admin">
+            <button type="button" class="btn btn-link p-0 border-0 fw-bold text-reset text-decoration-none d-inline-flex align-items-center gap-2" data-accion="detalle">
+                <span data-campo="total"></span>
+                <i class="bi bi-chevron-down" data-campo="chevron"></i>
+            </button>
+        </td>
+    </tr>
+</template>
+
+<template id="plantillaDetalle">
+    <tr class="fila-detalle">
+        <td colspan="7">
+            <div class="detalle-contenedor">
+                <h6 class="detalle-titulo"><i class="bi bi-box-seam me-1"></i>Productos de la venta</h6>
+                <ul class="detalle-lista" data-campo="lista"></ul>
+            </div>
+        </td>
+    </tr>
+</template>
+
+<template id="plantillaProducto">
+    <li class="detalle-item">
+        <span>
+            <span class="detalle-cant" data-campo="cantidad"></span><span data-campo="producto"></span>
+            <small class="texto-tenue ms-2" data-campo="unitario"></small>
+        </span>
+        <span class="detalle-precio" data-campo="subtotal"></span>
+    </li>
+</template>
+
+<template id="plantillaVacio">
+    <tr>
+        <td colspan="7">
+            <div class="vacio"><i class="bi bi-inbox"></i><span data-campo="mensaje"></span></div>
+        </td>
+    </tr>
+</template>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../JS/productos.js"></script>
 <script src="../JS/almacen.js"></script>
-<script src="../JS/renderizado.js"></script>
 <script src="../JS/admin-comun.js"></script>
 <script src="../JS/admin-ventas.js"></script>
 </body>

@@ -42,25 +42,66 @@
 
     const CLAVE_VENTAS = "mastertech_ventas";
 
+    // "prueba": no hay nada guardado | "ilegible": hay datos pero no se pueden leer | "real": ventas guardadas
+    function origenVentas() {
+        let crudo;
+        try {
+            crudo = localStorage.getItem(CLAVE_VENTAS);
+        } catch {
+            return "ilegible";
+        }
+        if (crudo === null) return "prueba";
+        try {
+            return Array.isArray(JSON.parse(crudo)) ? "real" : "ilegible";
+        } catch {
+            return "ilegible";
+        }
+    }
+
+    // Deja cada venta con todos sus campos, para que un registro incompleto no rompa la tabla
+    function normalizarVenta(v) {
+        const detalles = Array.isArray(v.detalles) ? v.detalles : [];
+        return {
+            id: String(v.id ?? ""),
+            fecha: String(v.fecha ?? ""),
+            cliente: String(v.cliente ?? ""),
+            numeroOrden: String(v.numeroOrden ?? ""),
+            estado: String(v.estado ?? ""),
+            total: Number(v.total) || 0,
+            detalles: detalles
+                .filter(d => d && typeof d === "object")
+                .map(d => ({
+                    cantidad: Number(d.cantidad) || 0,
+                    producto: String(d.producto ?? ""),
+                    precioUnitario: Number(d.precioUnitario) || 0
+                }))
+        };
+    }
+
     // leerLista viene de almacen.js
     function obtenerVentas() {
-        return leerLista(CLAVE_VENTAS, VENTAS_PRUEBA);
+        return leerLista(CLAVE_VENTAS, VENTAS_PRUEBA)
+            .filter(v => v && typeof v === "object")
+            .map(normalizarVenta);
     }
 
     const estado = { texto: "", columna: "fecha", direccion: "desc" };
-    const abiertas = new Set(); // ids de las ventas con el detalle desplegado
+    const abiertas = new Set(); // ids (texto) de las ventas con el detalle desplegado
 
     const cuerpo = document.getElementById("cuerpoTabla");
 
     const cantidadItems = v => v.detalles.reduce((suma, d) => suma + d.cantidad, 0);
 
-    const formatoFecha = iso => new Date(iso).toLocaleString("es-PE", {
-        day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
-    });
+    const formatoFecha = iso => {
+        const fecha = new Date(iso);
+        return isNaN(fecha) ? "—" : fecha.toLocaleString("es-PE", {
+            day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
+        });
+    };
 
     const plantilla = id => document.getElementById(id).content.firstElementChild.cloneNode(true);
 
-    // Rellena los elementos con data-campo usando textContent (no interpreta HTML)
+    // Rellena los elementos con data-campo usando textContent
     function llenar(nodo, datos) {
         Object.entries(datos).forEach(([campo, valor]) => {
             nodo.querySelector(`[data-campo="${campo}"]`).textContent = valor;
@@ -69,7 +110,7 @@
 
     function valorColumna(v, col) {
         if (col === "items") return cantidadItems(v);
-        if (col === "fecha") return new Date(v.fecha).getTime();
+        if (col === "fecha") return new Date(v.fecha).getTime() || 0;
         return v[col];
     }
 
@@ -77,14 +118,16 @@
         const t = estado.texto.trim().toLowerCase();
         const lista = obtenerVentas().filter(v =>
             !t ||
-            String(v.id).includes(t) ||
+            v.id.toLowerCase().includes(t) ||
             v.cliente.toLowerCase().includes(t) ||
             v.numeroOrden.toLowerCase().includes(t));
 
         const sentido = estado.direccion === "asc" ? 1 : -1;
         return lista.sort((a, b) => {
             const x = valorColumna(a, estado.columna), y = valorColumna(b, estado.columna);
-            const cmp = typeof x === "number" ? x - y : String(x).localeCompare(String(y), "es");
+            const cmp = typeof x === "number"
+                ? x - y
+                : String(x).localeCompare(String(y), "es", { numeric: true });
             return cmp * sentido;
         });
     }
@@ -129,7 +172,7 @@
             llenar(item, {
                 cantidad: d.cantidad + "x",
                 producto: d.producto,
-                unitario: d.cantidad > 1 ? "(" + formatoSoles(d.precioUnitario) + " c/u)" : "",
+                unitario: "(" + formatoSoles(d.precioUnitario) + " c/u)",
                 subtotal: formatoSoles(d.cantidad * d.precioUnitario)
             });
             lista.appendChild(item);
@@ -162,9 +205,12 @@
     cuerpo.addEventListener("click", e => {
         const boton = e.target.closest("button[data-id]");
         if (!boton) return;
-        const id = Number(boton.dataset.id);
+        const id = boton.dataset.id;
         if (abiertas.has(id)) abiertas.delete(id); else abiertas.add(id);
         pintarTabla();
+        // pintarTabla reemplaza los botones: devolver el foco al de la misma venta
+        const nuevo = cuerpo.querySelector(`button[data-id="${CSS.escape(id)}"]`);
+        if (nuevo) nuevo.focus();
     });
 
     document.querySelectorAll("th.ordenable").forEach(th => {
@@ -190,5 +236,11 @@
         pintarTabla();
     });
 
+    const origen = origenVentas();
+    if (origen === "prueba") {
+        mostrarAviso("warning", "Estás viendo ventas de prueba: todavía no hay ventas guardadas en el sistema.");
+    } else if (origen === "ilegible") {
+        mostrarAviso("danger", "No se pudieron leer las ventas guardadas. Se muestran ventas de prueba, no el historial real.");
+    }
     pintarTabla();
 })();

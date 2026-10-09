@@ -1,5 +1,4 @@
 (function () {
-    // Datos de prueba. Misma forma que devolvería el backend.
     const VENTAS_PRUEBA = [
         {
             id: 1, fecha: "2026-10-01T14:32:00", cliente: "Carlos Mendoza", numeroOrden: "ORD-0001", estado: "PAGADO",
@@ -41,21 +40,16 @@
         }
     ];
 
-    // Misma clave que debería usar el checkout al guardar una venta
     const CLAVE_VENTAS = "mastertech_ventas";
 
-    // leerLista viene de almacen.js: si no hay ventas guardadas, usa las de prueba
+    // leerLista viene de almacen.js
     function obtenerVentas() {
         return leerLista(CLAVE_VENTAS, VENTAS_PRUEBA);
     }
 
-    const estado = { columna: "fecha", direccion: "desc" };
+    const estado = { texto: "", columna: "fecha", direccion: "desc" };
 
     const cuerpo = document.getElementById("cuerpoTabla");
-
-    const esc = s => String(s).replace(/[&<>"']/g, c => (
-        { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
-    ));
 
     const cantidadItems = v => v.detalles.reduce((suma, d) => suma + d.cantidad, 0);
 
@@ -70,7 +64,12 @@
     }
 
     function ventasVisibles() {
-        const lista = [...obtenerVentas()];
+        const t = estado.texto.trim().toLowerCase();
+        const lista = obtenerVentas().filter(v =>
+            !t ||
+            String(v.id).includes(t) ||
+            v.cliente.toLowerCase().includes(t) ||
+            v.numeroOrden.toLowerCase().includes(t));
 
         const sentido = estado.direccion === "asc" ? 1 : -1;
         return lista.sort((a, b) => {
@@ -94,15 +93,15 @@
         const lista = ventasVisibles();
         if (lista.length === 0) {
             cuerpo.innerHTML = `<tr><td colspan="7"><div class="vacio"><i class="bi bi-inbox"></i>
-                No hay ventas registradas.</div></td></tr>`;
+                ${estado.texto ? "No hay ventas que coincidan." : "No hay ventas registradas."}</div></td></tr>`;
         } else {
             cuerpo.innerHTML = lista.map(v => `
                 <tr>
                     <td class="texto-tenue">${v.id}</td>
                     <td>${formatoFecha(v.fecha)}</td>
-                    <td class="fw-semibold">${esc(v.cliente)}</td>
-                    <td class="texto-tenue">${esc(v.numeroOrden)}</td>
-                    <td><span class="etiqueta-categoria">${esc(v.estado)}</span></td>
+                    <td class="fw-semibold">${escaparHtml(v.cliente)}</td>
+                    <td class="texto-tenue">${escaparHtml(v.numeroOrden)}</td>
+                    <td><span class="etiqueta-categoria">${escaparHtml(v.estado)}</span></td>
                     <td class="text-center">${cantidadItems(v)}</td>
                     <td class="precio-admin">${formatoSoles(v.total)}</td>
                 </tr>`).join("");
@@ -121,6 +120,17 @@
             }
             pintarTabla();
         });
+    });
+
+    document.getElementById("buscador").addEventListener("input", e => {
+        estado.texto = e.target.value;
+        pintarTabla();
+    });
+
+    document.getElementById("btnLimpiar").addEventListener("click", () => {
+        estado.texto = "";
+        document.getElementById("buscador").value = "";
+        pintarTabla();
     });
 
     pintarTabla();

@@ -144,6 +144,35 @@
     box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.2);
 }
 
+/* Reporte de ventas: acordeón de detalle */
+.fila-detalle td { background: #faf8ff; padding: 0.5rem 1rem 1rem; }
+
+.detalle-contenedor {
+    border-left: 4px solid var(--color-secundario);
+    background: var(--color-claro);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.detalle-titulo {
+    margin: 0 0 0.5rem;
+    font-size: 0.9rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-primario);
+}
+.detalle-lista { list-style: none; margin: 0; padding: 0; }
+.detalle-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.4rem 0;
+    border-top: 1px solid #f0f0f0;
+    font-size: 0.9rem;
+}
+.detalle-item:first-child { border-top: 0; }
+.detalle-cant { font-weight: var(--fw-bold); color: var(--color-secundario); margin-right: 0.35rem; }
+.detalle-precio { font-weight: var(--fw-bold); white-space: nowrap; }
+
 @media (max-width: 576px) {
     .admin-encabezado { align-items: flex-start; }
     .admin-encabezado .btn { width: 100%; }

@@ -16,6 +16,7 @@
 
 /* Estructura */
 .admin-principal { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem 3rem; }
+.admin-principal-angosto { max-width: 900px; }
 
 .admin-encabezado {
     display: flex;
@@ -80,24 +81,11 @@
 .tabla-admin tbody tr:hover { background: #faf8ff; }
 .tabla-admin .fila-agotada { background: #fff5f5; }
 
-.tabla-admin th.ordenable { padding: 0; user-select: none; transition: background-color 0.2s; }
+.tabla-admin th.ordenable { cursor: pointer; user-select: none; transition: background-color 0.2s; }
 .tabla-admin th.ordenable:hover { background: rgba(255, 255, 255, 0.1); }
-.btn-orden {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    padding: 0.85rem 1rem;
-    border: 0;
-    background: transparent;
-    color: inherit;
-    font: inherit;
-    text-align: left;
-    white-space: nowrap;
-    cursor: pointer;
-}
-.btn-orden:focus-visible { outline: 2px solid var(--color-claro); outline-offset: -4px; }
 .icono-orden { margin-left: 6px; font-size: 0.75rem; opacity: 0.6; }
 .tabla-admin th.orden-activo .icono-orden { opacity: 1; color: #ff8080; }
+.tabla-admin th.ordenable:focus-visible { outline: 2px solid var(--color-claro); outline-offset: -4px; }
 
 .texto-tenue { color: var(--color-gris-texto); }
 .precio-admin { font-weight: var(--fw-bold); white-space: nowrap; }
@@ -112,6 +100,15 @@
     font-size: 0.8rem;
     font-weight: var(--fw-medium);
 }
+.etiqueta-conteo {
+    display: inline-block;
+    padding: 0.2rem 0.7rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: var(--fw-medium);
+}
+.conteo-vacia { background: #e8f5e9; color: #1b5e20; }
+.conteo-con { background: #fff3cd; color: #7a5200; }
 
 /* Botones de acción */
 .btn-accion {
@@ -131,6 +128,12 @@
 .btn-editar:hover { background: var(--color-primario); color: var(--color-claro); }
 .btn-borrar { color: var(--color-secundario); border-color: rgba(204, 0, 0, 0.3); }
 .btn-borrar:hover { background: var(--color-secundario); color: var(--color-claro); }
+.btn-bloqueado {
+    color: var(--color-gris-texto);
+    border-color: #dee2e6;
+    background: #f8f9fa;
+    cursor: not-allowed;
+}
 
 /* Estado vacío */
 .vacio { padding: 3.5rem 1rem; text-align: center; color: var(--color-gris-texto); }

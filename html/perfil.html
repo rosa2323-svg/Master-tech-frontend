@@ -66,46 +66,13 @@
         <h2 class="fw-bold mb-4" style="letter-spacing:1px;">
             <i class="bi bi-person-circle me-2"></i>Mi Perfil
         </h2>
-        <!-- Banner del perfil -->
-        <div class="rounded-4 shadow-sm text-white p-4 mb-4"
-             style="background: radial-gradient(circle, #1a0b3d 0%, #000000 100%);">
-            <div class="d-flex flex-column flex-md-row align-items-center gap-4">
 
-                <div class="position-relative">
-                    <div class="rounded-circle bg-light text-dark d-flex align-items-center justify-content-center border border-3 border-danger"
-                         style="width: 110px; height: 110px;">
-                        <i id="iconoPerfil" class="bi bi-person-circle" style="font-size: 3.5rem;"></i>
-                    </div>
-                    <button type="button" class="btn btn-danger btn-sm rounded-circle position-absolute bottom-0 end-0"
-                            data-bs-toggle="modal" data-bs-target="#modalIconos"
-                            aria-label="Cambiar ícono de perfil" title="Cambiar ícono">
-                        <i class="bi bi-pencil-fill"></i>
-                    </button>
-                </div>
-
-                <div class="text-center text-md-start">
-                    <h3 id="bannerNombre" class="fw-bold mb-1">Usuario Master Tech</h3>
-                    <p class="mb-1 text-white-50">
-                        <i class="bi bi-envelope-fill me-2"></i><span id="bannerCorreo">usuario@mastertech.pe</span>
-                    </p>
-                    <p class="mb-0 text-white-50">
-                        <i class="bi bi-calendar-check-fill me-2"></i>Miembro desde <span id="bannerMiembro"></span>
-                    </p>
-                </div>
-            </div>
-        </div>
         <!-- Pestañas -->
         <ul class="nav nav-tabs mb-4" id="perfilTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="tab-datos" data-bs-toggle="tab" data-bs-target="#panel-datos"
                         type="button" role="tab" aria-controls="panel-datos" aria-selected="true">
                     <i class="bi bi-person-lines-fill me-2"></i>Datos personales
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="tab-seguridad" data-bs-toggle="tab" data-bs-target="#panel-seguridad"
-                        type="button" role="tab" aria-controls="panel-seguridad" aria-selected="false">
-                    <i class="bi bi-shield-lock-fill me-2"></i>Seguridad
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -136,9 +103,7 @@
                                     <div class="mb-3">
                                         <label for="inputNombre" class="form-label">Nombre completo</label>
                                         <input type="text" id="inputNombre" class="form-control"
-                                               placeholder="Ej: Sara Vargas" required
-                                               pattern="[\p{L}][\p{L} ']+" minlength="2" maxlength="60"
-                                               title="Solo letras y espacios, sin números">
+                                               placeholder="Ej: Rosa Vargas" required>
                                         <div class="invalid-feedback">Ingresa tu nombre.</div>
                                     </div>
 
@@ -166,51 +131,6 @@
                     </div>
                 </div>
             </div>
-            <div class="tab-pane fade" id="panel-seguridad" role="tabpanel" aria-labelledby="tab-seguridad" tabindex="0">
-                <div class="row">
-                    <div class="col-lg-7">
-                        <div class="card border-0 shadow-sm rounded-3">
-                            <div class="card-body p-4">
-                                <h5 class="fw-bold mb-3">
-                                    <i class="bi bi-shield-lock-fill me-2"></i>Cambiar contraseña
-                                </h5>
-
-                                <div id="mensajePassword" class="alert d-none" role="alert"></div>
-
-                                <form id="formPassword" novalidate>
-                                    <div class="mb-3">
-                                        <label for="inputPasswordActual" class="form-label">Contraseña actual</label>
-                                        <input type="password" id="inputPasswordActual" class="form-control"
-                                               placeholder="Tu contraseña actual" autocomplete="current-password" required>
-                                        <div class="invalid-feedback">Ingresa tu contraseña actual.</div>
-                                        <div id="avisoSinPassword" class="form-text d-none">
-                                            Aún no tienes una contraseña guardada: se creará con la nueva.
-                                        </div>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label for="inputPasswordNueva" class="form-label">Nueva contraseña</label>
-                                        <input type="password" id="inputPasswordNueva" class="form-control"
-                                               placeholder="Mínimo 8 caracteres" minlength="8" autocomplete="new-password" required>
-                                        <div class="invalid-feedback">La nueva contraseña debe tener mínimo 8 caracteres.</div>
-                                    </div>
-
-                                    <div class="mb-4">
-                                        <label for="inputPasswordConfirmar" class="form-label">Confirmar nueva contraseña</label>
-                                        <input type="password" id="inputPasswordConfirmar" class="form-control"
-                                               placeholder="Repite la nueva contraseña" autocomplete="new-password" required>
-                                        <div class="invalid-feedback">Confirma la nueva contraseña.</div>
-                                    </div>
-
-                                    <button type="submit" class="btn btn-danger w-100 fw-bold">
-                                        <i class="bi bi-key-fill me-2"></i>Cambiar contraseña
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
             <div class="tab-pane fade" id="panel-historial" role="tabpanel" aria-labelledby="tab-historial" tabindex="0">
                 <div class="accordion shadow-sm" id="acordeonOrdenes"></div>
 
@@ -223,20 +143,7 @@
         </div>
     </div>
 </main>
-<!-- MODAL: elegir ícono de perfil -->
-<div class="modal fade" id="modalIconos" tabindex="-1" aria-labelledby="tituloModalIconos" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold" id="tituloModalIconos">Elige tu ícono de perfil</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-                <div id="listaIconos" class="row g-2 text-center"></div>
-            </div>
-        </div>
-    </div>
-</div>
+
 <!-- MODAL DE LOGIN -->
 <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">

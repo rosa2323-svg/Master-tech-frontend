@@ -200,6 +200,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (guardarPerfil(datos)) {
             form.classList.remove("was-validated");
             mostrarMensajeGuardado();
+            actualizarBanner();
         } else {
             alert("No se pudieron guardar los datos en este navegador.");
         }
@@ -322,7 +323,7 @@ document.addEventListener("DOMContentLoaded", () => {
             marcarErrorPassword(confirmar, "Las contraseñas no coinciden.");
         }
         if (credencial && actual.value) {
-            let esCorrecta = false;
+            let esCorrecta;
             try {
                 esCorrecta = await passwordCorrecta(actual.value, credencial);
             } catch (error) {
@@ -348,6 +349,115 @@ document.addEventListener("DOMContentLoaded", () => {
             mostrarMensajePassword("Contraseña actualizada correctamente.", true);
         } else {
             mostrarMensajePassword("No se pudo guardar la contraseña en este navegador.", false);
+        }
+    });
+});
+// ===== Banner del perfil e ícono elegible (simulación con localStorage) =====
+const CLAVE_ICONO = "mastertech_icono_perfil";
+const CLAVE_MIEMBRO = "mastertech_miembro_desde";
+const ICONO_POR_DEFECTO = "bi-person-circle";
+const ICONOS_PERFIL = [
+    { clase: "bi-person-circle", nombre: "Persona" },
+    { clase: "bi-emoji-smile-fill", nombre: "Sonrisa" },
+    { clase: "bi-controller", nombre: "Control de juegos" },
+    { clase: "bi-joystick", nombre: "Joystick" },
+    { clase: "bi-cpu-fill", nombre: "Procesador" },
+    { clase: "bi-laptop", nombre: "Laptop" },
+    { clase: "bi-phone-fill", nombre: "Teléfono" },
+    { clase: "bi-headset", nombre: "Audífonos" },
+    { clase: "bi-rocket-takeoff-fill", nombre: "Cohete" },
+    { clase: "bi-lightning-charge-fill", nombre: "Rayo" },
+    { clase: "bi-robot", nombre: "Robot" },
+    { clase: "bi-trophy-fill", nombre: "Trofeo" },
+    { clase: "bi-stars", nombre: "Estrellas" },
+    { clase: "bi-fire", nombre: "Fuego" },
+    { clase: "bi-moon-stars-fill", nombre: "Luna" },
+    { clase: "bi-heart-fill", nombre: "Corazón" }
+];
+
+function esIconoValido(clase) {
+    return ICONOS_PERFIL.some(icono => icono.clase === clase);
+}
+
+function obtenerIcono() {
+    try {
+        const guardado = localStorage.getItem(CLAVE_ICONO);
+        return esIconoValido(guardado) ? guardado : ICONO_POR_DEFECTO;
+    } catch (error) {
+        return ICONO_POR_DEFECTO;
+    }
+}
+
+function guardarIcono(clase) {
+    if (!esIconoValido(clase)) return false;
+    try {
+        localStorage.setItem(CLAVE_ICONO, clase);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+// La primera vez que se abre el perfil se guarda la fecha; después siempre se muestra esa.
+function obtenerMiembroDesde() {
+    try {
+        let fecha = new Date(localStorage.getItem(CLAVE_MIEMBRO));
+        if (isNaN(fecha)) {
+            fecha = new Date();
+            localStorage.setItem(CLAVE_MIEMBRO, fecha.toISOString());
+        }
+        return fecha;
+    } catch (error) {
+        return new Date();
+    }
+}
+
+function actualizarBanner() {
+    const icono = document.getElementById("iconoPerfil");
+    if (!icono) return;
+
+    icono.className = "bi " + obtenerIcono();
+
+    const perfil = obtenerPerfil();
+    document.getElementById("bannerNombre").textContent =
+        perfil && perfil.nombre ? perfil.nombre : "Usuario Master Tech";
+
+    document.getElementById("bannerMiembro").textContent =
+        obtenerMiembroDesde().toLocaleDateString("es-PE", { month: "long", year: "numeric" });
+}
+
+function pintarListaIconos() {
+    const lista = document.getElementById("listaIconos");
+    if (!lista) return;
+
+    const actual = obtenerIcono();
+    lista.innerHTML = ICONOS_PERFIL.map(i => `
+        <div class="col-3">
+            <button type="button" class="btn ${i.clase === actual ? "btn-danger" : "btn-outline-secondary"} w-100 py-3"
+                    data-icono="${escaparHtml(i.clase)}"
+                    aria-label="Elegir ícono: ${escaparHtml(i.nombre)}" title="${escaparHtml(i.nombre)}">
+                <i class="bi ${escaparHtml(i.clase)} fs-3"></i>
+            </button>
+        </div>`).join("");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    if (!document.getElementById("iconoPerfil")) return;
+
+    actualizarBanner();
+    pintarListaIconos();
+
+    document.getElementById("listaIconos").addEventListener("click", (evento) => {
+        const boton = evento.target.closest("[data-icono]");
+        if (!boton) return;
+
+        if (guardarIcono(boton.dataset.icono)) {
+            actualizarBanner();
+            pintarListaIconos();
+            const modal = bootstrap.Modal.getInstance(document.getElementById("modalIconos"));
+            if (modal) modal.hide();
+        } else {
+            alert("No se pudo guardar el ícono en este navegador.");
         }
     });
 });

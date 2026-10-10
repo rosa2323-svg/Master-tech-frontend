@@ -219,12 +219,20 @@ const TEXTOS_ERROR_PASSWORD = {
 };
 
 function obtenerCredencial() {
-    try {
-        const guardada = localStorage.getItem(CLAVE_PASSWORD);
-        return guardada ? JSON.parse(guardada) : null;
-    } catch (error) {
-        return null;
+    const guardada = localStorage.getItem(CLAVE_PASSWORD);
+    if (guardada === null) return null;
+
+    const credencial = JSON.parse(guardada);
+    if (
+        !credencial ||
+        typeof credencial !== "object" ||
+        typeof credencial.sal !== "string" ||
+        typeof credencial.hash !== "string"
+    ) {
+        throw new Error("Credencial inválida");
     }
+
+    return credencial;
 }
 
 function guardarCredencial(credencial) {
@@ -287,9 +295,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const confirmar = document.getElementById("inputPasswordConfirmar");
     const aviso = document.getElementById("avisoSinPassword");
 
+    // Si la contraseña guardada no se puede leer, se bloquea el formulario
+    // para no sobrescribirla por error.
+    function bloquearFormulario() {
+        form.querySelectorAll("input, button").forEach(el => { el.disabled = true; });
+        aviso.textContent = "No se pudo leer tu contraseña guardada, así que el cambio está bloqueado. Recarga la página.";
+        aviso.classList.remove("d-none");
+    }
+
     // Si todavía no hay contraseña guardada, el campo "actual" se desactiva
     function prepararCampoActual() {
-        const hayPassword = obtenerCredencial() !== null;
+        let hayPassword;
+        try {
+            hayPassword = obtenerCredencial() !== null;
+        } catch (error) {
+            bloquearFormulario();
+            return;
+        }
         actual.disabled = !hayPassword;
         actual.required = hayPassword;
         aviso.classList.toggle("d-none", hayPassword);
@@ -314,7 +336,13 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const credencial = obtenerCredencial();
+        let credencial;
+        try {
+            credencial = obtenerCredencial();
+        } catch (error) {
+            mostrarMensajePassword("No se pudo leer tu contraseña guardada. No se hizo ningún cambio.", false);
+            return;
+        }
 
         if (nueva.value && nueva.value.length < 8) {
             marcarErrorPassword(nueva, TEXTOS_ERROR_PASSWORD.inputPasswordNueva);
@@ -341,7 +369,13 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const nuevaCredencial = await hashearPassword(nueva.value);
+        let nuevaCredencial;
+        try {
+            nuevaCredencial = await hashearPassword(nueva.value);
+        } catch (error) {
+            mostrarMensajePassword("No se pudo generar la credencial de la contraseña.", false);
+            return;
+        }
         if (guardarCredencial(nuevaCredencial)) {
             form.reset();
             form.classList.remove("was-validated");

@@ -132,8 +132,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderizarOrdenes(ordenes);
 });
 // ===== Datos personales (simulación con localStorage) =====
-// Cuando exista el backend, obtenerPerfil() y guardarPerfil()
-// se reemplazan por llamadas al servidor.
 const CLAVE_PERFIL = "mastertech_perfil";
 
 function obtenerPerfil() {
@@ -204,6 +202,152 @@ document.addEventListener("DOMContentLoaded", () => {
             mostrarMensajeGuardado();
         } else {
             alert("No se pudieron guardar los datos en este navegador.");
+        }
+    });
+});
+// ===== Cambiar contraseña (simulación con localStorage) =====
+// La contraseña nunca se guarda en texto plano: se guarda un hash (PBKDF2-SHA256 con sal).
+// Cuando exista el backend, obtenerCredencial(), guardarCredencial() y el hash
+// se reemplazan por el cifrado y las llamadas al servidor.
+const CLAVE_PASSWORD = "mastertech_password";
+const ITERACIONES_PASSWORD = 100000;
+const TEXTOS_ERROR_PASSWORD = {
+    inputPasswordActual: "Ingresa tu contraseña actual.",
+    inputPasswordNueva: "La nueva contraseña debe tener mínimo 8 caracteres.",
+    inputPasswordConfirmar: "Confirma la nueva contraseña."
+};
+
+function obtenerCredencial() {
+    try {
+        const guardada = localStorage.getItem(CLAVE_PASSWORD);
+        return guardada ? JSON.parse(guardada) : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+function guardarCredencial(credencial) {
+    try {
+        localStorage.setItem(CLAVE_PASSWORD, JSON.stringify(credencial));
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+function aHex(buffer) {
+    return Array.from(new Uint8Array(buffer))
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("");
+}
+
+function deHex(hex) {
+    return new Uint8Array((hex.match(/.{2}/g) || []).map(par => parseInt(par, 16)));
+}
+
+// Devuelve { sal, hash }. Si no se pasa sal, genera una nueva al azar.
+async function hashearPassword(password, salHex) {
+    const sal = salHex ? deHex(salHex) : crypto.getRandomValues(new Uint8Array(16));
+    const material = await crypto.subtle.importKey(
+        "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]
+    );
+    const bits = await crypto.subtle.deriveBits(
+        { name: "PBKDF2", salt: sal, iterations: ITERACIONES_PASSWORD, hash: "SHA-256" },
+        material, 256
+    );
+    return { sal: aHex(sal), hash: aHex(bits) };
+}
+
+async function passwordCorrecta(password, credencial) {
+    const calculada = await hashearPassword(password, credencial.sal);
+    return calculada.hash === credencial.hash;
+}
+
+function marcarErrorPassword(campo, texto) {
+    campo.setCustomValidity(texto);
+    const aviso = campo.parentElement.querySelector(".invalid-feedback");
+    if (aviso) aviso.textContent = texto;
+}
+
+function mostrarMensajePassword(texto, exito) {
+    const caja = document.getElementById("mensajePassword");
+    caja.textContent = texto;
+    caja.classList.remove("d-none", "alert-success", "alert-danger");
+    caja.classList.add(exito ? "alert-success" : "alert-danger");
+    setTimeout(() => caja.classList.add("d-none"), 4000);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("formPassword");
+    if (!form) return;
+
+    const actual = document.getElementById("inputPasswordActual");
+    const nueva = document.getElementById("inputPasswordNueva");
+    const confirmar = document.getElementById("inputPasswordConfirmar");
+    const aviso = document.getElementById("avisoSinPassword");
+
+    // Si todavía no hay contraseña guardada, el campo "actual" se desactiva
+    function prepararCampoActual() {
+        const hayPassword = obtenerCredencial() !== null;
+        actual.disabled = !hayPassword;
+        actual.required = hayPassword;
+        aviso.classList.toggle("d-none", hayPassword);
+    }
+
+    function limpiarErrores() {
+        [actual, nueva, confirmar].forEach(campo => {
+            campo.setCustomValidity("");
+            const texto = campo.parentElement.querySelector(".invalid-feedback");
+            if (texto) texto.textContent = TEXTOS_ERROR_PASSWORD[campo.id];
+        });
+    }
+
+    prepararCampoActual();
+
+    form.addEventListener("submit", async (evento) => {
+        evento.preventDefault();
+        limpiarErrores();
+
+        if (!window.crypto || !crypto.subtle) {
+            mostrarMensajePassword("Este navegador no permite cifrar la contraseña en esta página. Abre el sitio con Live Server (localhost).", false);
+            return;
+        }
+
+        const credencial = obtenerCredencial();
+
+        if (nueva.value && nueva.value.length < 8) {
+            marcarErrorPassword(nueva, TEXTOS_ERROR_PASSWORD.inputPasswordNueva);
+        }
+        if (confirmar.value && confirmar.value !== nueva.value) {
+            marcarErrorPassword(confirmar, "Las contraseñas no coinciden.");
+        }
+        if (credencial && actual.value) {
+            let esCorrecta = false;
+            try {
+                esCorrecta = await passwordCorrecta(actual.value, credencial);
+            } catch (error) {
+                esCorrecta = false;
+            }
+            if (!esCorrecta) {
+                marcarErrorPassword(actual, "La contraseña actual es incorrecta.");
+            } else if (nueva.value === actual.value) {
+                marcarErrorPassword(nueva, "La nueva contraseña debe ser distinta de la actual.");
+            }
+        }
+
+        if (!form.checkValidity()) {
+            form.classList.add("was-validated");
+            return;
+        }
+
+        const nuevaCredencial = await hashearPassword(nueva.value);
+        if (guardarCredencial(nuevaCredencial)) {
+            form.reset();
+            form.classList.remove("was-validated");
+            prepararCampoActual();
+            mostrarMensajePassword("Contraseña actualizada correctamente.", true);
+        } else {
+            mostrarMensajePassword("No se pudo guardar la contraseña en este navegador.", false);
         }
     });
 });

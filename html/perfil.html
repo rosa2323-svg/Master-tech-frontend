@@ -76,6 +76,12 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-seguridad" data-bs-toggle="tab" data-bs-target="#panel-seguridad"
+                        type="button" role="tab" aria-controls="panel-seguridad" aria-selected="false">
+                    <i class="bi bi-shield-lock-fill me-2"></i>Seguridad
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link" id="tab-historial" data-bs-toggle="tab" data-bs-target="#panel-historial"
                         type="button" role="tab" aria-controls="panel-historial" aria-selected="false">
                     <i class="bi bi-bag-check me-2"></i>Historial de compras
@@ -126,6 +132,51 @@
 
                                     <button type="submit" class="btn btn-danger w-100 fw-bold">
                                         <i class="bi bi-save2-fill me-2"></i>Guardar cambios
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="panel-seguridad" role="tabpanel" aria-labelledby="tab-seguridad" tabindex="0">
+                <div class="row">
+                    <div class="col-lg-7">
+                        <div class="card border-0 shadow-sm rounded-3">
+                            <div class="card-body p-4">
+                                <h5 class="fw-bold mb-3">
+                                    <i class="bi bi-shield-lock-fill me-2"></i>Cambiar contraseña
+                                </h5>
+
+                                <div id="mensajePassword" class="alert d-none" role="alert"></div>
+
+                                <form id="formPassword" novalidate>
+                                    <div class="mb-3">
+                                        <label for="inputPasswordActual" class="form-label">Contraseña actual</label>
+                                        <input type="password" id="inputPasswordActual" class="form-control"
+                                               placeholder="Tu contraseña actual" autocomplete="current-password" required>
+                                        <div class="invalid-feedback">Ingresa tu contraseña actual.</div>
+                                        <div id="avisoSinPassword" class="form-text d-none">
+                                            Aún no tienes una contraseña guardada: se creará con la nueva.
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="inputPasswordNueva" class="form-label">Nueva contraseña</label>
+                                        <input type="password" id="inputPasswordNueva" class="form-control"
+                                               placeholder="Mínimo 8 caracteres" minlength="8" autocomplete="new-password" required>
+                                        <div class="invalid-feedback">La nueva contraseña debe tener mínimo 8 caracteres.</div>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <label for="inputPasswordConfirmar" class="form-label">Confirmar nueva contraseña</label>
+                                        <input type="password" id="inputPasswordConfirmar" class="form-control"
+                                               placeholder="Repite la nueva contraseña" autocomplete="new-password" required>
+                                        <div class="invalid-feedback">Confirma la nueva contraseña.</div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-danger w-100 fw-bold">
+                                        <i class="bi bi-key-fill me-2"></i>Cambiar contraseña
                                     </button>
                                 </form>
                             </div>

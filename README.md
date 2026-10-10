@@ -4,8 +4,6 @@ Tienda web para artículos de tecnología (laptops, computadoras, teléfonos, ta
 
 **Stack tecnológico:** HTML5, CSS3, JavaScript, Bootstrap 5 y Bootstrap Icons (por CDN)
 
----
-
 ## 1. Instalación y ejecución
 
 Este proyecto no requiere instalación de dependencias ni build, ya que es HTML/CSS/JS puro.
@@ -18,60 +16,64 @@ git clone https://github.com/rosa2323-svg/Master-tech-frontend.git
 # o usar la extensión "Live Server" en tu editor para verlo con recarga automática
 ```
 
----
-
 ## 2. Estructura del proyecto
-Master-tech-frontend/
-├── .github/ # Configuración de GitHub
-├── .coderabbit.yaml # Configuración de la revisión automática de PR
-├── CSS/
-│ └── estilos.css # Estilos generales del sitio
-├── html/
-│ ├── categoria.html # Listado de productos por categoría
-│ ├── mision.html # Misión y visión
-│ ├── nosotros.html # Página "Nosotros"
-│ ├── perfil.html # Perfil de usuario e historial de compras
-│ ├── registro.html # Registro/login de usuario
-│ └── resultados-busqueda.html # Resultados del buscador
-├── Imagenes/
-│ └── ... # Íconos, banners, imágenes de productos y packs
-├── JS/
-│ ├── buscador.js # Buscador y sugerencias
-│ ├── categoria.js # Lógica de la vista de categoría
-│ ├── emergente.js # Ventanas/modales emergentes
-│ ├── perfil.js # Historial de compras y datos del perfil
-│ ├── productos.js # Datos de los productos
-│ ├── renderizado.js # Dibujado de tarjetas de producto
-│ └── solicitarlogin.js # Lógica del formulario de login
-├── index.html # Página principal (catálogo, banner, packs)
-└── README.md
 
----
+```text
+Master-tech-frontend/
+├── .github/
+├── .idea/
+├── CSS/
+│   ├── admin.css
+│   └── estilos.css
+├── html/
+│   ├── admin-categorias.html
+│   ├── admin-productos.html
+│   ├── admin-ventas.html
+│   ├── carrito.html
+│   ├── categoria.html
+│   ├── mision.html
+│   ├── nosotros.html
+│   ├── perfil.html
+│   ├── producto.html
+│   ├── registro.html
+│   └── resultados-busqueda.html
+├── Imagenes/
+├── JS/
+│   ├── admin-categorias.js
+│   ├── admin-comun.js
+│   ├── admin-productos.js
+│   ├── admin-ventas.js
+│   ├── almacen.js
+│   ├── buscador.js
+│   ├── carrito.js
+│   ├── categoria.js
+│   ├── emergente.js
+│   ├── perfil.js
+│   ├── producto.js
+│   ├── productos.js
+│   ├── renderizado.js
+│   └── solicitarlogin.js
+├── .coderabbit.yaml
+├── index.html
+└── README.md
+```
 
 ## 3. Flujo de trabajo (Git Flow)
 
-| Rama | Responsable de |
-|---|---|
-| `main` | Versión estable/final |
-| `develop` | Integración de todas las features |
-| `feature/vistas-html` | Estructura HTML de las páginas |
-| `feature/diseno-css` | Estilos y diseño visual |
-| `feature/diseno-css-responsive` | Diseño responsive |
-| `feature/recursos-img` | Imágenes y recursos gráficos |
-| `feature/compatibilidad-navegadores` | Ajustes de compatibilidad entre navegadores |
-| `feature/logica-carrito` | Lógica del carrito de compras |
-| `feature/logica-busqueda` | Lógica del buscador |
-| `feature/checkout-auth` | Checkout y autenticación |
-| `feature/admin-productos` | Administración de productos |
-| `feature/admin-categorias` | Administración de categorías |
-| `feature/admin-ventas` | Administración de ventas |
-| `migracion-react` | Migración del proyecto a React |
-| `react/base-catalogo` | Base del catálogo en React |
-| `react/carrito-usuario` | Carrito del usuario en React |
-| `react/diseno-ventas` | Diseño de la vista de ventas en React |
-| `react/index-admin` | Página principal del panel de administración en React |
-| `bugfix/error-vistas-html` | Corrección de errores en las vistas HTML |
+El proyecto sigue un enfoque basado en Git Flow, estructurado en ramas principales persistentes y ramas efímeras que se crean y eliminan según las necesidades de desarrollo del equipo.
 
-**Reglas de protección de ramas:**
-- `main` y `develop` requieren Pull Request + 2 aprobaciones + resolución de conversaciones antes de mergear
-- Las ramas `feature/*` no requieren PR, para agilizar el trabajo individual antes de integrar a `develop`
+### Ramas Principales
+- `main`: Contiene la versión estable y final del proyecto (código de producción).
+- `develop`: Rama base de integración. Todas las nuevas características se unen aquí antes de pasar a la rama principal.
+
+### Nomenclatura de Ramas Efímeras
+Las ramas de trabajo se crean a partir de `develop` y utilizan los siguientes prefijos según su propósito:
+- `feature/*`: Desarrollo de nuevas funcionalidades, vistas HTML, diseños CSS o lógica en JS (ej. `feature/carrito`, `feature/admin-panel`).
+- `bugfix/*`: Corrección de errores detectados en desarrollo.
+- `react/*`: Ramas específicas destinadas a la migración progresiva del proyecto hacia la tecnología React.
+
+### Reglas de protección y revisión de código:
+
+- **Integración de Bots de IA:** Para mantener la calidad del código, los repositorios cuentan con la integración de **CodeRabbit** y **GitHub Copilot**. Estos bots realizan revisiones automáticas en los Pull Requests, sugiriendo mejoras y detectando problemas potenciales.
+- Las ramas `main` y `develop` están protegidas. Requieren **Pull Request + 1 aprobación + resolución de conversaciones** antes de poder hacer el merge.
+- Las ramas de trabajo individual (`feature/*`, `bugfix/*`, etc.) **no** requieren PR para los commits diarios, agilizando el desarrollo hasta el momento de su integración definitiva hacia `develop`.

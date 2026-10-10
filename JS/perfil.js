@@ -172,6 +172,11 @@ function mostrarMensajeGuardado() {
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("formPerfil");
     if (!form) return;
+    // Nombre: no permite números ni símbolos (tampoco al pegar texto)
+    const inputNombre = document.getElementById("inputNombre");
+    inputNombre.addEventListener("input", () => {
+        inputNombre.value = inputNombre.value.replace(/[^\p{L} ']/gu, "");
+    });
 
     cargarFormularioPerfil();
 

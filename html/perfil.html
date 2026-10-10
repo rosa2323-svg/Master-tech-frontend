@@ -103,7 +103,9 @@
                                     <div class="mb-3">
                                         <label for="inputNombre" class="form-label">Nombre completo</label>
                                         <input type="text" id="inputNombre" class="form-control"
-                                               placeholder="Ej: Rosa Vargas" required>
+                                               placeholder="Ej: Sara Vargas" required
+                                               pattern="[\p{L}][\p{L} ']+" minlength="2" maxlength="60"
+                                               title="Solo letras y espacios, sin números">
                                         <div class="invalid-feedback">Ingresa tu nombre.</div>
                                     </div>
 

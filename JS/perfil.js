@@ -401,8 +401,9 @@ function guardarIcono(clase) {
 // La primera vez que se abre el perfil se guarda la fecha; después siempre se muestra esa.
 function obtenerMiembroDesde() {
     try {
-        let fecha = new Date(localStorage.getItem(CLAVE_MIEMBRO));
-        if (isNaN(fecha)) {
+        const guardada = localStorage.getItem(CLAVE_MIEMBRO);
+        let fecha = guardada ? new Date(guardada) : null;
+        if (!fecha || isNaN(fecha)) {
             fecha = new Date();
             localStorage.setItem(CLAVE_MIEMBRO, fecha.toISOString());
         }

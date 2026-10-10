@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MASTER TECH | Reporte de ventas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../CSS/estilos.css">
+    <link rel="stylesheet" href="../CSS/admin.css">
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark admin-barra">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="../index.html"><i class="bi bi-house-fill me-2"></i>MASTER TECH</a>
+        <div class="admin-enlaces">
+            <a class="nav-link" href="admin-productos.html"><i class="bi bi-box-seam"></i> Productos</a>
+            <a class="nav-link active" href="admin-ventas.html" aria-current="page"><i class="bi bi-receipt"></i> Ventas</a>
+        </div>
+    </div>
+</nav>
+
+<main class="admin-principal">
+    <div class="admin-encabezado">
+        <div>
+            <h1 class="admin-titulo">Reporte de ventas</h1>
+            <p class="admin-subtitulo">Historial de transacciones de Master Tech para la gestión interna.</p>
+        </div>
+    </div>
+
+    <div id="avisos"></div>
+
+    <div class="barra-herramientas">
+        <input type="search" id="buscador" class="form-control" placeholder="Buscar por ID, cliente o N° de orden" aria-label="Buscar ventas">
+        <button type="button" id="btnLimpiar" class="btn btn-outline-secondary">
+            <i class="bi bi-x-lg me-1"></i>Limpiar
+        </button>
+    </div>
+
+    <div class="tabla-envoltorio">
+        <table class="tabla-admin">
+            <thead>
+            <tr>
+                <th class="ordenable" data-col="id" aria-sort="none"><button type="button" class="btn-orden">ID<i class="bi bi-arrow-down-up icono-orden" aria-hidden="true"></i></button></th>
+                <th class="ordenable" data-col="fecha" aria-sort="none"><button type="button" class="btn-orden">Fecha<i class="bi bi-arrow-down-up icono-orden" aria-hidden="true"></i></button></th>
+                <th class="ordenable" data-col="cliente" aria-sort="none"><button type="button" class="btn-orden">Cliente<i class="bi bi-arrow-down-up icono-orden" aria-hidden="true"></i></button></th>
+                <th class="ordenable" data-col="numeroOrden" aria-sort="none"><button type="button" class="btn-orden">N° Orden<i class="bi bi-arrow-down-up icono-orden" aria-hidden="true"></i></button></th>
+                <th class="ordenable" data-col="estado" aria-sort="none"><button type="button" class="btn-orden">Estado<i class="bi bi-arrow-down-up icono-orden" aria-hidden="true"></i></button></th>
+                <th class="ordenable" data-col="items" aria-sort="none"><button type="button" class="btn-orden">Items<i class="bi bi-arrow-down-up icono-orden" aria-hidden="true"></i></button></th>
+                <th class="ordenable" data-col="total" aria-sort="none"><button type="button" class="btn-orden">Total<i class="bi bi-arrow-down-up icono-orden" aria-hidden="true"></i></button></th>
+            </tr>
+            </thead>
+            <tbody id="cuerpoTabla"></tbody>
+        </table>
+    </div>
+</main>
+
+<!-- el JS las clona y rellena los textos -->
+<template id="plantillaVenta">
+    <tr>
+        <td class="texto-tenue" data-campo="id"></td>
+        <td data-campo="fecha"></td>
+        <td class="fw-semibold" data-campo="cliente"></td>
+        <td class="texto-tenue" data-campo="numeroOrden"></td>
+        <td><span class="etiqueta-categoria" data-campo="estado"></span></td>
+        <td class="text-center" data-campo="items"></td>
+        <td class="precio-admin">
+            <button type="button" class="btn btn-link p-0 border-0 fw-bold text-reset text-decoration-none d-inline-flex align-items-center gap-2" data-accion="detalle">
+                <span data-campo="total"></span>
+                <i class="bi bi-chevron-down" data-campo="chevron"></i>
+            </button>
+        </td>
+    </tr>
+</template>
+
+<template id="plantillaDetalle">
+    <tr class="fila-detalle">
+        <td colspan="7">
+            <div class="detalle-contenedor">
+                <h6 class="detalle-titulo"><i class="bi bi-box-seam me-1"></i>Productos de la venta</h6>
+                <ul class="detalle-lista" data-campo="lista"></ul>
+            </div>
+        </td>
+    </tr>
+</template>
+
+<template id="plantillaProducto">
+    <li class="detalle-item">
+        <span>
+            <span class="detalle-cant" data-campo="cantidad"></span><span data-campo="producto"></span>
+            <small class="texto-tenue ms-2" data-campo="unitario"></small>
+        </span>
+        <span class="detalle-precio" data-campo="subtotal"></span>
+    </li>
+</template>
+
+<template id="plantillaVacio">
+    <tr>
+        <td colspan="7">
+            <div class="vacio"><i class="bi bi-inbox"></i><span data-campo="mensaje"></span></div>
+        </td>
+    </tr>
+</template>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../JS/productos.js"></script>
+<script src="../JS/almacen.js"></script>
+<script src="../JS/admin-comun.js"></script>
+<script src="../JS/admin-ventas.js"></script>
+</body>
+</html>

@@ -70,6 +70,7 @@ El proyecto sigue un enfoque basado en Git Flow, estructurado en ramas principal
 Las ramas de trabajo se crean a partir de `develop` y utilizan los siguientes prefijos según su propósito:
 - `feature/*`: Desarrollo de nuevas funcionalidades, vistas HTML, diseños CSS o lógica en JS (ej. `feature/carrito`, `feature/admin-panel`).
 - `bugfix/*`: Corrección de errores detectados en desarrollo.
+- `hotfix/*`: Corrección de errores críticos detectados en producción.
 - `react/*`: Ramas específicas destinadas a la migración progresiva del proyecto hacia la tecnología React.
 
 ### Reglas de protección y revisión de código:

@@ -338,3 +338,33 @@ async def test_chat_budget_returns_friendly_message(settings):
     eng.llm = Lento()
     r = await eng.chat(principal("a@x.com", "USER"), "hola")
     assert "demorando" in r.text
+
+
+async def test_older_summary_never_overwrites_a_newer_one(settings):
+    eng, proj, llm = _engine(settings)
+    r = await eng.chat(principal("a@x.com", "USER"), "hola")
+    await eng.store.set_summary(r.conversation_id, "nuevo", 10)
+    await eng.store.set_summary(r.conversation_id, "viejo", 5)           # termino tarde: se descarta
+    conv = await eng.store.get_conversation(r.conversation_id)
+    assert (conv.summary, conv.summarized_upto) == ("nuevo", 10)
+
+
+async def test_concurrent_summaries_run_one_at_a_time(settings):
+    import asyncio
+    settings.history_messages = 2
+    eng, proj, llm = _engine(settings)
+    activos, maximo = 0, 0
+
+    async def lento(*, system, prompt):
+        nonlocal activos, maximo
+        activos += 1; maximo = max(maximo, activos)
+        await asyncio.sleep(0.02)
+        activos -= 1
+        return "resumen"
+    llm.complete = lento
+    p = principal("a@x.com", "USER")
+    r = await eng.chat(p, "uno")
+    for i in range(8):
+        await eng.store.add_message(r.conversation_id, "user" if i % 2 == 0 else "assistant", f"m{i}")
+    await asyncio.gather(*(eng._maybe_summarize(r.conversation_id) for _ in range(4)))
+    assert maximo == 1 and not eng._sum_locks

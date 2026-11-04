@@ -121,7 +121,9 @@ class InMemoryStore:
         return rows[:-keep_last] if keep_last else rows
 
     async def set_summary(self, conversation_id, summary, upto_id):
-        self.convs[conversation_id].update(summary=summary, upto=upto_id)
+        c = self.convs.get(conversation_id)
+        if c is not None and upto_id > c["upto"]:         # un resumen mas viejo nunca pisa a uno mas nuevo
+            c.update(summary=summary, upto=upto_id)
 
     async def get_facts(self, bot_user_id):
         now = _now()
@@ -259,8 +261,9 @@ class PostgresStore:
         return msgs[:-keep_last] if keep_last else msgs
 
     async def set_summary(self, conversation_id, summary, upto_id):
-        await self._run("update bot.conversations set summary=%s, summarized_upto=%s where id=%s",
-                        (summary, upto_id, conversation_id))
+        # condicional: si otro resumen ya avanzo mas, este se descarta (no retrocede el estado)
+        await self._run("update bot.conversations set summary=%s, summarized_upto=%s where id=%s and summarized_upto < %s",
+                        (summary, upto_id, conversation_id, upto_id))
 
     async def get_facts(self, bot_user_id):
         rows = await self._all(
@@ -315,8 +318,11 @@ class PostgresStore:
 
     async def forget_user(self, bot_user_id):
         # conversations/messages/facts/pending caen en cascada; la auditoria se anonimiza por set null
-        await self._run("delete from bot.conversations where user_id=%s", (bot_user_id,))
-        await self._run("delete from bot.user_facts where user_id=%s", (bot_user_id,))
-        await self._run("delete from bot.pending_actions where user_id=%s", (bot_user_id,))
-        await self._run("delete from bot.tool_audit where user_id=%s", (bot_user_id,))
-        await self._run("delete from bot.users where id=%s", (bot_user_id,))      # incluye el correo (external_user_id)
+        # una sola transaccion: o se borra todo o no se borra nada
+        async with self.pool.connection() as c:
+            async with c.transaction():
+                await c.execute("delete from bot.conversations where user_id=%s", (bot_user_id,))
+                await c.execute("delete from bot.user_facts where user_id=%s", (bot_user_id,))
+                await c.execute("delete from bot.pending_actions where user_id=%s", (bot_user_id,))
+                await c.execute("delete from bot.tool_audit where user_id=%s", (bot_user_id,))
+                await c.execute("delete from bot.users where id=%s", (bot_user_id,))   # incluye el correo (external_user_id)

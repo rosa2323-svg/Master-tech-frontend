@@ -55,6 +55,7 @@ class BotEngine:
         self.s, self.store, self.llm, self.project = settings, store, llm, project
         self.limiter = RateLimiter(settings.rate_limit_per_min)
         self._bg: set[asyncio.Task] = set()
+        self._sum_locks: dict[str, asyncio.Lock] = {}     # un solo resumen a la vez por conversacion
         self._install_fact_tools()
 
     # ------------------------------------------------------------------ memoria de preferencias
@@ -255,6 +256,15 @@ class BotEngine:
         t.add_done_callback(self._bg.discard)
 
     async def _maybe_summarize(self, conv_id: str) -> None:
+        lock = self._sum_locks.setdefault(conv_id, asyncio.Lock())
+        try:
+            async with lock:
+                await self._summarize_locked(conv_id)
+        finally:
+            if not lock.locked():
+                self._sum_locks.pop(conv_id, None)
+
+    async def _summarize_locked(self, conv_id: str) -> None:
         try:
             keep = self.s.history_messages
             conv = await self.store.get_conversation(conv_id)

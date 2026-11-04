@@ -1,52 +1,106 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import type { Producto } from '../api/types'
+import { ApiError, bot } from '../api/client'
+import type { BotAccion, Producto } from '../api/types'
 import { useAlert } from '../context/AlertContext'
+import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useCatalog } from '../context/CatalogContext'
-import { categoriaPorPalabra } from '../utils/categorias'
-import { formatoSoles, imagenProducto, IMG_DEFECTO, marcaDe, normalizar } from '../utils/format'
+import { formatoSoles, imagenProducto, IMG_DEFECTO, marcaDe } from '../utils/format'
 
-// Asistente simulado (sin IA): responde con reglas sobre el catálogo real del backend.
-// Para conectar una IA, reemplaza solo obtenerRespuesta().
+// Asistente con IA (bot-core: FastAPI + Gemini). Requiere sesión: el servidor valida el mismo JWT que Spring,
+// guarda el historial en la BD y recuerda las preferencias de cada cliente. Aquí solo se pintan los mensajes.
 
-const CLAVE_HISTORIAL = 'mastertech_chatbot_historial'
-const MAX_HISTORIAL = 40
-const RETARDO_MS = 900
-const BIENVENIDA = 'Hola, soy el asistente de Master Tech. Puedo ayudarte a elegir productos, revisar stock y recomendarte según lo que has comprado antes. ¿En qué te ayudo?'
-const SUGERENCIAS = ['Recomiéndame algo', 'Quiero una laptop gamer', 'Celulares disponibles', 'Ver ofertas']
+const CLAVE_HISTORIAL_ANTIGUO = 'mastertech_chatbot_historial' // versión sin IA: guardaba el chat en el navegador
+const SUGERENCIAS = ['Recomiéndame algo', 'Quiero una laptop gamer', '¿Qué compré antes?', '¿Cómo es la garantía?']
 
 interface Mensaje { texto: string; tipo: 'bot' | 'usuario' | 'error'; hora: string; productos?: number[] }
-interface Respuesta { texto: string; productos?: Producto[] }
 
-const hora = () => new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })
+const horaDe = (iso?: string | null) => {
+  const f = iso ? new Date(iso) : new Date()
+  return (isNaN(f.getTime()) ? new Date() : f).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })
+}
 
-function leerHistorial(): Mensaje[] {
-  try {
-    const g = JSON.parse(localStorage.getItem(CLAVE_HISTORIAL) ?? 'null')
-    return Array.isArray(g) ? g : []
-  } catch { return [] }
+const bienvenida = (nombre?: string): Mensaje => ({
+  texto: `Hola${nombre ? `, ${nombre.trim().split(/\s+/)[0]}` : ''}. Soy el asistente de Master Tech. Puedo ayudarte a elegir productos, revisar stock y recomendarte según lo que has comprado antes. ¿En qué te ayudo?`,
+  tipo: 'bot', hora: horaDe(),
+})
+
+/** Ids de producto de las acciones `products` de una respuesta (sin repetidos). */
+const idsDe = (acciones: BotAccion[] | undefined): number[] =>
+  [...new Set((acciones ?? []).filter(a => a.type === 'products').flatMap(a => a.ids ?? []))]
+
+function mensajeDeError(e: unknown): string {
+  if (e instanceof ApiError) {
+    if (e.status === 0) return 'No pude comunicarme con el asistente. Inténtalo de nuevo en unos minutos.'
+    if (e.status === 401) return 'No pude validar tu sesión con el asistente. Cierra sesión y vuelve a entrar.'
+    if (e.status === 429) return 'Estás escribiendo muy rápido. Espera unos segundos e inténtalo otra vez.'
+    if (e.status === 400) return e.message
+  }
+  return 'Algo salió mal con el asistente. Inténtalo de nuevo en unos minutos.'
+}
+
+/** El modelo suele responder con **negritas** y listas con guion o asterisco: se pintan sin usar HTML. */
+function Formateado({ texto }: { texto: string }) {
+  const nodos: ReactNode[] = []
+  texto.split('\n').forEach((linea, n) => {
+    if (n > 0) nodos.push('\n')
+    linea.replace(/^\s*[*-]\s+/, '• ').split(/\*\*(.+?)\*\*/g).forEach((trozo, i) => {
+      nodos.push(i % 2 ? <strong key={`${n}-${i}`}>{trozo}</strong> : trozo)
+    })
+  })
+  return <>{nodos}</>
 }
 
 export default function Chatbot() {
-  const { productos, categorias } = useCatalog()
+  const { productos } = useCatalog()
   const { agregar } = useCart()
   const { mostrarAlerta } = useAlert()
+  const { sesion, abrirLogin } = useAuth()
+  const email = sesion?.email ?? null
+
   const [abierto, setAbierto] = useState(false)
-  const [mensajes, setMensajes] = useState<Mensaje[]>(() => {
-    const h = leerHistorial()
-    return h.length ? h : [{ texto: BIENVENIDA, tipo: 'bot', hora: hora() }]
-  })
+  const [mensajes, setMensajes] = useState<Mensaje[]>([])
+  const [cargando, setCargando] = useState(false)
   const [escribiendo, setEscribiendo] = useState(false)
   const [entrada, setEntrada] = useState('')
   const zona = useRef<HTMLDivElement>(null)
-  const idConversacion = useRef(0)
+  const generacion = useRef(0)                       // invalida respuestas en vuelo al reiniciar o cambiar de cliente
+  const conversacion = useRef<string | null>(null)   // id de la conversación en el servidor
+  const nueva = useRef(false)                        // la próxima pregunta abre una conversación nueva
+  const historialPedido = useRef(false)
 
+  // Otro cliente (o cierre de sesión): nada del chat anterior debe quedar a la vista.
   useEffect(() => {
-    const guardables = mensajes.filter(m => m.tipo !== 'error').slice(-MAX_HISTORIAL)
-    try { localStorage.setItem(CLAVE_HISTORIAL, JSON.stringify(guardables)) } catch { /* sin cuota */ }
-    zona.current?.scrollTo({ top: zona.current.scrollHeight })
-  }, [mensajes, escribiendo, abierto])
+    generacion.current++
+    conversacion.current = null
+    nueva.current = false
+    historialPedido.current = false
+    setMensajes([]); setEscribiendo(false); setCargando(false); setEntrada('')
+    try { localStorage.removeItem(CLAVE_HISTORIAL_ANTIGUO) } catch { /* sin almacenamiento */ }
+  }, [email])
+
+  // Al abrir el chat con sesión: trae la última conversación guardada en el servidor.
+  useEffect(() => {
+    if (!abierto || !email || historialPedido.current) return
+    historialPedido.current = true
+    const gen = generacion.current
+    setCargando(true)
+    bot.historial()
+      .then(h => {
+        if (gen !== generacion.current) return
+        conversacion.current = h.conversation_id
+        setMensajes(h.messages.length
+          ? h.messages.map((m): Mensaje => ({
+              texto: m.text, tipo: m.role === 'user' ? 'usuario' : 'bot', hora: horaDe(m.at), productos: idsDe(m.ui),
+            }))
+          : [bienvenida(sesion?.nombre)])
+      })
+      .catch(() => { if (gen === generacion.current) setMensajes([bienvenida(sesion?.nombre)]) })
+      .finally(() => { if (gen === generacion.current) setCargando(false) })
+  }, [abierto, email, sesion?.nombre])
+
+  useEffect(() => { zona.current?.scrollTo({ top: zona.current.scrollHeight }) }, [mensajes, escribiendo, cargando, abierto])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setAbierto(false) }
@@ -54,60 +108,52 @@ export default function Chatbot() {
     return () => document.removeEventListener('keydown', onKey)
   }, [])
 
-  const conStock = productos.filter(p => p.stock > 0)
-  const deCategoria = (...palabras: string[]) => {
-    const cat = categoriaPorPalabra(categorias, ...palabras)
-    return cat ? conStock.filter(p => p.categoriaId === cat.id) : []
-  }
-
-  function responder(texto: string): Respuesta {
-    const t = normalizar(texto)
-    if (/(hola|buenas|buenos dias|buenas tardes|buenas noches)/.test(t))
-      return { texto: 'Hola, ¿buscas algo en particular? Puedo recomendarte laptops, celulares, accesorios o componentes.' }
-    if (/(laptop|computadora|pc|notebook|gamer)/.test(t))
-      return { texto: 'Estas son las opciones de laptops y computadoras que tenemos con stock:', productos: deCategoria('laptop', 'computadora').slice(0, 4) }
-    if (/(celular|telefono|smartphone|iphone|tablet)/.test(t))
-      return { texto: 'Te dejo los teléfonos disponibles ahora:', productos: deCategoria('telefono', 'celular').slice(0, 4) }
-    if (/(mouse|accesorio|consola|teclado|audifono)/.test(t))
-      return { texto: 'Mira estos accesorios:', productos: [...deCategoria('accesorio'), ...deCategoria('consola')].slice(0, 4) }
-    if (/(componente|ram|procesador|tarjeta de video|armar)/.test(t))
-      return { texto: 'Para armado de PC tenemos esto:', productos: deCategoria('componente').slice(0, 4) }
-    if (/(oferta|promo|descuento|pack)/.test(t))
-      return { texto: 'Ahora hay packs con garantía oficial de 12 meses: Pack Laptop Pro, Pack Teléfono + Tablet y consola PlayStation 5. Los ves en el inicio de la tienda.' }
-    if (/(recomiend|sugier|que me|algo)/.test(t))
-      return { texto: 'Estos son algunos productos destacados:', productos: [...conStock].sort((a, b) => b.stock - a.stock).slice(0, 4) }
-    if (/(envio|entrega|delivery)/.test(t)) return { texto: 'El envío es gratis a todo el Perú.' }
-    if (/(garantia)/.test(t)) return { texto: 'Todos los productos tienen garantía oficial de 12 meses, y hay garantía extendida disponible.' }
-    return { texto: 'Estoy en modo de prueba y entiendo consultas sobre laptops, celulares, accesorios, componentes, ofertas, envío y garantía.' }
-  }
-
-  const obtenerRespuesta = async (texto: string): Promise<Respuesta> => {
-    await new Promise(r => setTimeout(r, RETARDO_MS))
-    return responder(texto)
-  }
-
   const enviar = async (textoCrudo: string) => {
     const texto = textoCrudo.trim()
-    if (!texto || escribiendo) return
-    const id = idConversacion.current
-    setMensajes(m => [...m, { texto, tipo: 'usuario', hora: hora() }])
+    if (!texto || escribiendo || cargando || !email) return
+    const gen = generacion.current
+    const abrirNueva = nueva.current
+    setMensajes(m => [...m, { texto, tipo: 'usuario', hora: horaDe() }])
     setEscribiendo(true)
     try {
-      const r = await obtenerRespuesta(texto)
-      if (id !== idConversacion.current) return
-      setMensajes(m => [...m, { texto: r.texto, tipo: 'bot', hora: hora(), productos: r.productos?.map(p => p.id) }])
-    } catch {
-      if (id !== idConversacion.current) return
-      setMensajes(m => [...m, { texto: 'No pude comunicarme con el asistente. Inténtalo de nuevo en unos minutos.', tipo: 'error', hora: hora() }])
+      const r = await bot.chat(texto, abrirNueva ? null : conversacion.current, abrirNueva)
+      if (gen !== generacion.current) return
+      nueva.current = false
+      conversacion.current = r.conversation_id
+      setMensajes(m => [...m, { texto: r.text, tipo: 'bot', hora: horaDe(), productos: idsDe(r.ui_actions) }])
+    } catch (e) {
+      if (gen !== generacion.current) return
+      setMensajes(m => [...m, { texto: mensajeDeError(e), tipo: 'error', hora: horaDe() }])
     } finally {
-      if (id === idConversacion.current) setEscribiendo(false)
+      if (gen === generacion.current) setEscribiendo(false)
     }
   }
 
   const reiniciar = () => {
-    idConversacion.current++
+    generacion.current++
+    conversacion.current = null
+    nueva.current = true            // las preferencias que el asistente recuerda se conservan
     setEscribiendo(false)
-    setMensajes([{ texto: BIENVENIDA, tipo: 'bot', hora: hora() }])
+    setMensajes([bienvenida(sesion?.nombre)])
+  }
+
+  const olvidar = async () => {
+    if (escribiendo || cargando) return   // nunca borrar mientras hay un mensaje en vuelo
+    if (!window.confirm('¿Borrar tu historial con el asistente y todo lo que recuerda de ti (preferencias)? No se puede deshacer.')) return
+    const gen = ++generacion.current
+    setEscribiendo(true)                  // bloquea el envío mientras se borra
+    try {
+      await bot.olvidarme()
+      if (gen !== generacion.current) return
+      conversacion.current = null
+      nueva.current = false
+      setMensajes([bienvenida(sesion?.nombre)])
+      mostrarAlerta('Listo: el asistente ya no recuerda nada de ti.', true)
+    } catch (e) {
+      if (gen === generacion.current) mostrarAlerta(mensajeDeError(e))
+    } finally {
+      if (gen === generacion.current) setEscribiendo(false)   // también si falla: no deja el chat "ocupado"
+    }
   }
 
   const onSubmit = (e: FormEvent) => {
@@ -118,6 +164,7 @@ export default function Chatbot() {
   }
 
   const soloBienvenida = mensajes.length === 1 && mensajes[0].tipo === 'bot'
+  const ocupado = escribiendo || cargando
 
   return (
     <>
@@ -133,63 +180,84 @@ export default function Chatbot() {
             <strong>Asistente Master Tech</strong>
             <span className="chatbot-estado">En línea</span>
           </div>
-          <button type="button" className="chatbot-accion" title="Nueva conversación" aria-label="Nueva conversación" onClick={reiniciar}>
-            <i className="bi bi-arrow-counterclockwise" />
-          </button>
+          {email && (
+            <>
+              <button type="button" className="chatbot-accion" title="Nueva conversación" aria-label="Nueva conversación"
+                      onClick={reiniciar} disabled={ocupado}>
+                <i className="bi bi-arrow-counterclockwise" />
+              </button>
+              <button type="button" className="chatbot-accion" title="Borrar mi historial y lo que recuerdas de mí"
+                      aria-label="Borrar mi historial y lo que recuerda el asistente" onClick={() => void olvidar()} disabled={ocupado}>
+                <i className="bi bi-trash3" />
+              </button>
+            </>
+          )}
           <button type="button" className="chatbot-accion" title="Cerrar" aria-label="Cerrar" onClick={() => setAbierto(false)}>
             <i className="bi bi-x-lg" />
           </button>
         </header>
 
-        <div className="chatbot-mensajes" ref={zona} aria-live="polite">
-          {mensajes.map((m, i) => {
-            const lista = (m.productos ?? []).map(id => productos.find(p => p.id === id)).filter((p): p is Producto => !!p)
-            return (
-              <div key={i}>
-                <div className={`chatbot-mensaje ${m.tipo}`}>
-                  {m.texto}<span className="chatbot-hora">{m.hora}</span>
-                </div>
-                {lista.length > 0 && (
-                  <div className="chatbot-recomendaciones">
-                    {lista.map(p => (
-                      <article className="chatbot-producto" key={p.id}>
-                        <div className="chatbot-producto-img">
-                          <img src={imagenProducto(p.imagenUrl)} alt={p.nombre}
-                               onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = IMG_DEFECTO }} />
-                        </div>
-                        <span className="chatbot-producto-marca">{marcaDe(p)}</span>
-                        <p className="chatbot-producto-nombre">{p.nombre}</p>
-                        <span className="chatbot-producto-precio">{formatoSoles(p.precio)}</span>
-                        <div className="chatbot-producto-acciones">
-                          <Link className="chatbot-producto-ver" to={`/producto/${p.id}`} onClick={() => setAbierto(false)}>Ver</Link>
-                          <button type="button" className="chatbot-producto-agregar" disabled={p.stock <= 0}
-                                  onClick={() => { const r = agregar(p); if (!r.ok) mostrarAlerta(r.mensaje ?? '') }}>
-                            {p.stock <= 0 ? 'Agotado' : 'Agregar'}
-                          </button>
-                        </div>
-                      </article>
-                    ))}
+        {!email ? (
+          <div className="chatbot-mensajes chatbot-invitado">
+            <i className="bi bi-person-lock chatbot-invitado-icono" />
+            <strong>Inicia sesión para chatear</strong>
+            <p>Así puedo recordar tus preferencias, conocer tus compras anteriores y retomar la conversación donde la dejaste.</p>
+            <button type="button" className="chatbot-login" onClick={() => { setAbierto(false); abrirLogin() }}>Iniciar sesión</button>
+            <Link className="chatbot-registro" to="/registro" onClick={() => setAbierto(false)}>Crear una cuenta</Link>
+          </div>
+        ) : (
+          <>
+            <div className="chatbot-mensajes" ref={zona} aria-live="polite">
+              {mensajes.map((m, i) => {
+                const lista = (m.productos ?? []).map(id => productos.find(p => p.id === id)).filter((p): p is Producto => !!p)
+                return (
+                  <div key={i}>
+                    <div className={`chatbot-mensaje ${m.tipo}`}>
+                      <Formateado texto={m.texto} /><span className="chatbot-hora">{m.hora}</span>
+                    </div>
+                    {lista.length > 0 && (
+                      <div className="chatbot-recomendaciones">
+                        {lista.map(p => (
+                          <article className="chatbot-producto" key={p.id}>
+                            <div className="chatbot-producto-img">
+                              <img src={imagenProducto(p.imagenUrl)} alt={p.nombre}
+                                   onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = IMG_DEFECTO }} />
+                            </div>
+                            <span className="chatbot-producto-marca">{marcaDe(p)}</span>
+                            <p className="chatbot-producto-nombre">{p.nombre}</p>
+                            <span className="chatbot-producto-precio">{formatoSoles(p.precio)}</span>
+                            <div className="chatbot-producto-acciones">
+                              <Link className="chatbot-producto-ver" to={`/producto/${p.id}`} onClick={() => setAbierto(false)}>Ver</Link>
+                              <button type="button" className="chatbot-producto-agregar" disabled={p.stock <= 0}
+                                      onClick={() => { const r = agregar(p); if (!r.ok) mostrarAlerta(r.mensaje ?? '') }}>
+                                {p.stock <= 0 ? 'Agotado' : 'Agregar'}
+                              </button>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            )
-          })}
-          {escribiendo && <div className="chatbot-escribiendo"><span /><span /><span /></div>}
-        </div>
+                )
+              })}
+              {ocupado && <div className="chatbot-escribiendo"><span /><span /><span /></div>}
+            </div>
 
-        <div className="chatbot-sugerencias">
-          {soloBienvenida && !escribiendo && SUGERENCIAS.map(s => (
-            <button key={s} type="button" className="chatbot-sugerencia" onClick={() => void enviar(s)}>{s}</button>
-          ))}
-        </div>
+            <div className="chatbot-sugerencias">
+              {soloBienvenida && !ocupado && SUGERENCIAS.map(s => (
+                <button key={s} type="button" className="chatbot-sugerencia" onClick={() => void enviar(s)}>{s}</button>
+              ))}
+            </div>
 
-        <form className="chatbot-formulario" onSubmit={onSubmit} autoComplete="off">
-          <input type="text" className="chatbot-entrada" placeholder="Escribe tu mensaje..." maxLength={500} required
-                 value={entrada} onChange={e => setEntrada(e.target.value)} disabled={escribiendo} />
-          <button type="submit" className="chatbot-enviar" aria-label="Enviar" disabled={escribiendo}>
-            <i className="bi bi-send-fill" />
-          </button>
-        </form>
+            <form className="chatbot-formulario" onSubmit={onSubmit} autoComplete="off">
+              <input type="text" className="chatbot-entrada" placeholder="Escribe tu mensaje..." maxLength={500} required
+                     value={entrada} onChange={e => setEntrada(e.target.value)} disabled={ocupado} />
+              <button type="submit" className="chatbot-enviar" aria-label="Enviar" disabled={ocupado}>
+                <i className="bi bi-send-fill" />
+              </button>
+            </form>
+          </>
+        )}
       </section>
     </>
   )

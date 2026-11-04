@@ -1,8 +1,11 @@
 import type {
-  Categoria, Perfil, Producto, ProductoInput, RegistroData, Rol, Sesion, Usuario, Venta,
+  BotHistorial, BotRespuesta, Categoria, Perfil, Producto, ProductoInput, RegistroData, Rol, Sesion, Usuario, Venta,
 } from './types'
 
 export const API_URL = (import.meta.env.VITE_API_URL ?? 'http://localhost:8089').replace(/\/$/, '')
+
+/** Servicio del asistente con IA (Python/FastAPI). Valida el MISMO JWT que emite Spring. */
+export const BOT_URL = (import.meta.env.VITE_BOT_URL ?? 'http://localhost:8090').replace(/\/$/, '')
 
 const CLAVE_TOKEN = 'mastertech_token'
 
@@ -110,4 +113,50 @@ export const api = {
   checkout: (items: { productoId: number; cantidad: number }[]) =>
     send<{ url: string }>('POST', '/api/v1/pedidos/checkout', { items }),
   confirmarPago: (sessionId: string) => send<Venta>('POST', '/api/v1/pedidos/confirmar', { sessionId }),
+}
+
+
+const ESPERA_BOT_MS = 60_000
+
+async function peticionBot<T>(ruta: string, { method = 'GET', body }: { method?: string; body?: unknown } = {}): Promise<T> {
+  const headers: Record<string, string> = {}
+  const token = tokenStore.get()
+  if (token) headers.Authorization = `Bearer ${token}`
+  if (body !== undefined) headers['Content-Type'] = 'application/json'
+
+  const control = new AbortController()
+  const reloj = setTimeout(() => control.abort(), ESPERA_BOT_MS)
+  let resp: Response
+  try {
+    resp = await fetch(`${BOT_URL}${ruta}`, {
+      method, headers, signal: control.signal,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    })
+  } catch {
+    throw new ApiError(0, 'No se pudo conectar con el asistente.')
+  } finally {
+    clearTimeout(reloj)
+  }
+
+  if (resp.status === 204) return undefined as T
+  const texto = await resp.text()
+  let datos: unknown = null
+  if (texto) { try { datos = JSON.parse(texto) } catch { datos = null } }
+
+  if (!resp.ok) {
+    // FastAPI: { detail: "..." } (errores propios) o { detail: [ ... ] } (validación 422)
+    const detalle = (datos as { detail?: unknown } | null)?.detail
+    throw new ApiError(resp.status, typeof detalle === 'string' ? detalle : `Error ${resp.status}`)
+  }
+  return datos as T
+}
+
+export const bot = {
+  /** Última conversación del cliente (para repintar el chat al volver). */
+  historial: () => peticionBot<BotHistorial>('/history'),
+  /** `nueva: true` abre una conversación nueva; si no, el servidor retoma la última. */
+  chat: (message: string, conversationId: string | null, nueva: boolean) =>
+    peticionBot<BotRespuesta>('/chat', { method: 'POST', body: { message, conversation_id: conversationId, new: nueva } }),
+  /** Borra el historial y las preferencias que el asistente guardó del cliente. */
+  olvidarme: () => peticionBot<void>('/me/data', { method: 'DELETE' }),
 }

@@ -81,3 +81,28 @@ export interface RegistroData {
   direccion: string
   numeroTelefono: string
 }
+
+// ---- Asistente (bot-core): http://localhost:8090 ----
+/** Acción de interfaz que acompaña a una respuesta. Hoy: { type: 'products', ids } = tarjetas de producto. */
+export interface BotAccion {
+  type: string
+  ids?: number[]
+}
+
+export interface BotRespuesta {
+  conversation_id: string
+  text: string
+  ui_actions: BotAccion[]
+}
+
+export interface BotMensaje {
+  role: 'user' | 'assistant'
+  text: string
+  ui: BotAccion[]
+  at: string | null
+}
+
+export interface BotHistorial {
+  conversation_id: string | null
+  messages: BotMensaje[]
+}

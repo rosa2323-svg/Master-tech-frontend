@@ -62,7 +62,9 @@ class MastertechBackend:
             try:
                 data = await self._req(path, token)
             except ToolError:
-                if hit:
+                # Solo el catalogo publico (sin token) puede servirse viejo. Los datos de un cliente nunca:
+                # si Spring rechaza su sesion o cambian sus permisos, no se reutiliza lo que habia en cache.
+                if hit and token is None:
                     log.warning("Spring no responde; se usa el dato en cache de %s", path)
                     return hit[1]
                 raise

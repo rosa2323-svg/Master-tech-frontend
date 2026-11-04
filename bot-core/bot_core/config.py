@@ -27,6 +27,7 @@ class Settings:
     cors_origins: list[str] = field(default_factory=list)
     max_tool_rounds: int = 5
     max_user_chars: int = 1500
+    chat_budget_s: float = 50.0       # tiempo maximo por mensaje (modelo + herramientas); el navegador espera mas
     resume_days: int = 30             # una conversacion se retoma si su ultimo mensaje es mas reciente que esto
 
     @classmethod
@@ -45,5 +46,6 @@ class Settings:
             rate_limit_per_min=_int("BOT_RATE_LIMIT_PER_MIN", 12),
             history_messages=_int("BOT_HISTORY_MESSAGES", 16),
             resume_days=_int("BOT_RESUME_DAYS", 30),
+            chat_budget_s=float(_int("BOT_CHAT_BUDGET_S", 50)),
             cors_origins=[o.strip() for o in os.getenv("BOT_CORS_ORIGINS", "").split(",") if o.strip()],
         )

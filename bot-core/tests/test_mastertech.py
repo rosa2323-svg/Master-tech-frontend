@@ -265,12 +265,17 @@ async def test_backend_serves_stale_catalog_when_spring_is_down_and_maps_errors(
             return httpx.Response(401)
         return httpx.Response(200, json=PRODUCTOS)
     api, _ = _backend(handler)
-    api.catalog_ttl = 0.0                                                  # cada lectura expira
+    api.catalog_ttl = api.user_ttl = 0.0                                   # cada lectura expira
     assert len(await api.catalogo()) == 7
     estado["ok"] = False
     assert len(await api.catalogo()) == 7                                  # usa el dato viejo
     with pytest.raises(ToolError, match="no responde"):
         await api.categorias()                                             # sin dato previo: error claro
+    estado["ok"] = True
+    await api.pedidos("tok")                                               # llena la cache privada del cliente
+    estado["ok"] = False
+    with pytest.raises(ToolError, match="no responde"):
+        await api.pedidos("tok")                                           # datos de cliente: NUNCA se sirven viejos
     estado["ok"] = True
     with pytest.raises(ToolError, match="sesión expiró"):
         await api.perfil("tok")
@@ -307,3 +312,29 @@ def test_api_history_and_new_conversation(settings):
     assert n["conversation_id"] != a["conversation_id"]
     hist = c.get("/history", headers=h).json()
     assert hist["conversation_id"] == n["conversation_id"] and len(hist["messages"]) == 2
+
+
+# ------------------------------------------------------------------ borrar datos y tiempo maximo
+async def test_forget_removes_user_row_and_ids_are_not_reused(settings):
+    eng, proj, llm = _engine(settings)
+    a, b = principal("a@x.com", "USER"), principal("b@x.com", "USER")
+    await eng.chat(a, "hola"); await eng.chat(b, "hola")
+    await eng.forget(a)
+    assert ("mastertech", "a@x.com") not in eng.store.users                # el correo ya no queda en bot.users
+    assert ("mastertech", "b@x.com") in eng.store.users
+    await eng.chat(a, "volví")
+    assert eng.store.users[("mastertech", "a@x.com")] != eng.store.users[("mastertech", "b@x.com")]
+
+
+async def test_chat_budget_returns_friendly_message(settings):
+    import asyncio
+
+    class Lento(FakeLLM):
+        async def generate(self, **kw):
+            await asyncio.sleep(1)
+            return LLMResponse(text="tarde")
+    settings.chat_budget_s = 0.05
+    eng, proj, _ = _engine(settings)
+    eng.llm = Lento()
+    r = await eng.chat(principal("a@x.com", "USER"), "hola")
+    assert "demorando" in r.text

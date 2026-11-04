@@ -70,9 +70,14 @@ class InMemoryStore:
         self.audits: list[dict] = []
         self.pendings: dict[str, dict] = {}
         self._mid = 0
+        self._uid = 0
 
     async def upsert_user(self, project_id, external_id, role, name):
-        return self.users.setdefault((project_id, external_id), len(self.users) + 1)
+        key = (project_id, external_id)
+        if key not in self.users:
+            self._uid += 1                      # contador propio: no reutiliza ids tras borrar usuarios
+            self.users[key] = self._uid
+        return self.users[key]
 
     async def get_or_create_conversation(self, bot_user_id, conversation_id, channel):
         c = self.convs.get(conversation_id or "")
@@ -158,6 +163,7 @@ class InMemoryStore:
         for aid in [a for a, p in self.pendings.items() if p["user"] == bot_user_id]:
             self.pendings.pop(aid)
         self.audits = [a for a in self.audits if a["user"] != bot_user_id]
+        self.users = {k: v for k, v in self.users.items() if v != bot_user_id}
 
 
 # ----------------------------------------------------------------------------
@@ -313,3 +319,4 @@ class PostgresStore:
         await self._run("delete from bot.user_facts where user_id=%s", (bot_user_id,))
         await self._run("delete from bot.pending_actions where user_id=%s", (bot_user_id,))
         await self._run("delete from bot.tool_audit where user_id=%s", (bot_user_id,))
+        await self._run("delete from bot.users where id=%s", (bot_user_id,))      # incluye el correo (external_user_id)

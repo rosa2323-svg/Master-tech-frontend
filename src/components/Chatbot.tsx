@@ -138,17 +138,21 @@ export default function Chatbot() {
   }
 
   const olvidar = async () => {
+    if (escribiendo || cargando) return   // nunca borrar mientras hay un mensaje en vuelo
     if (!window.confirm('¿Borrar tu historial con el asistente y todo lo que recuerda de ti (preferencias)? No se puede deshacer.')) return
-    generacion.current++
+    const gen = ++generacion.current
+    setEscribiendo(true)                  // bloquea el envío mientras se borra
     try {
       await bot.olvidarme()
+      if (gen !== generacion.current) return
       conversacion.current = null
       nueva.current = false
-      setEscribiendo(false)
       setMensajes([bienvenida(sesion?.nombre)])
       mostrarAlerta('Listo: el asistente ya no recuerda nada de ti.', true)
     } catch (e) {
-      mostrarAlerta(mensajeDeError(e))
+      if (gen === generacion.current) mostrarAlerta(mensajeDeError(e))
+    } finally {
+      if (gen === generacion.current) setEscribiendo(false)   // también si falla: no deja el chat "ocupado"
     }
   }
 
@@ -178,11 +182,12 @@ export default function Chatbot() {
           </div>
           {email && (
             <>
-              <button type="button" className="chatbot-accion" title="Nueva conversación" aria-label="Nueva conversación" onClick={reiniciar}>
+              <button type="button" className="chatbot-accion" title="Nueva conversación" aria-label="Nueva conversación"
+                      onClick={reiniciar} disabled={ocupado}>
                 <i className="bi bi-arrow-counterclockwise" />
               </button>
               <button type="button" className="chatbot-accion" title="Borrar mi historial y lo que recuerdas de mí"
-                      aria-label="Borrar mi historial y lo que recuerda el asistente" onClick={() => void olvidar()}>
+                      aria-label="Borrar mi historial y lo que recuerda el asistente" onClick={() => void olvidar()} disabled={ocupado}>
                 <i className="bi bi-trash3" />
               </button>
             </>

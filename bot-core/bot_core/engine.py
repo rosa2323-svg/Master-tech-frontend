@@ -178,19 +178,23 @@ class BotEngine:
                  for t in self.project.registry.for_role(principal.role)]
         text = ""
         try:
-            for _ in range(self.s.max_tool_rounds):
-                resp = await self.llm.generate(system=system, messages=messages, tools=decls)
-                if not resp.tool_calls:
-                    text = resp.text
-                    break
-                messages.append({"role": "assistant", "text": resp.text,
-                                 "tool_calls": [{"name": c.name, "args": c.args} for c in resp.tool_calls],
-                                 "raw": resp.raw})
-                for call in resp.tool_calls:
-                    result = await self._run_tool(call.name, call.args, ctx, col)
-                    messages.append({"role": "tool", "name": call.name, "result": result})
-            else:
-                text = "No logré completar la solicitud. ¿Puedes reformularla?"
+            async with asyncio.timeout(self.s.chat_budget_s):
+                for _ in range(self.s.max_tool_rounds):
+                    resp = await self.llm.generate(system=system, messages=messages, tools=decls)
+                    if not resp.tool_calls:
+                        text = resp.text
+                        break
+                    messages.append({"role": "assistant", "text": resp.text,
+                                     "tool_calls": [{"name": c.name, "args": c.args} for c in resp.tool_calls],
+                                     "raw": resp.raw})
+                    for call in resp.tool_calls:
+                        result = await self._run_tool(call.name, call.args, ctx, col)
+                        messages.append({"role": "tool", "name": call.name, "result": result})
+                else:
+                    text = "No logré completar la solicitud. ¿Puedes reformularla?"
+        except TimeoutError:
+            log.warning("chat excedio el presupuesto de %ss", self.s.chat_budget_s)
+            text = "Me estoy demorando más de lo normal. Inténtalo de nuevo en unos segundos."
         except LLMError as e:
             log.warning("LLM error: %s", e)
             text = "Ahora mismo no puedo responder. Inténtalo de nuevo en unos segundos."

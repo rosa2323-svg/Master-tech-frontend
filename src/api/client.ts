@@ -115,8 +115,11 @@ export const api = {
   confirmarPago: (sessionId: string) => send<Venta>('POST', '/api/v1/pedidos/confirmar', { sessionId }),
 }
 
-
-const ESPERA_BOT_MS = 60_000
+// ---------------------------------------------------------------------------------------------
+// Asistente con IA. Aparte de `peticion` a propósito: un 401 del bot NO cierra la sesión (puede ser un
+// secreto JWT mal configurado en el bot y no un token vencido); el chat muestra un aviso y ya.
+// Mayor que el presupuesto del servidor (BOT_CHAT_BUDGET_S, 50 s): el servidor responde con un aviso antes de que el navegador corte.
+const ESPERA_BOT_MS = 65_000
 
 async function peticionBot<T>(ruta: string, { method = 'GET', body }: { method?: string; body?: unknown } = {}): Promise<T> {
   const headers: Record<string, string> = {}

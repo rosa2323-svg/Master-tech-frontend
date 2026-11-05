@@ -9,7 +9,7 @@ export const normalizar = (t: string) =>
 export const slugify = (t: string) =>
   normalizar(t).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
-export const IMG_DEFECTO = '/Imagenes/consolatarjeta.jpg'
+export const IMG_DEFECTO = '/img/placeholder.jpeg'
 
 export function imagenProducto(url?: string | null): string {
   if (!url) return IMG_DEFECTO

@@ -55,7 +55,7 @@ export default function Register() {
             <div className="card border-0 shadow-lg rounded-4 overflow-hidden">
               <div className="row g-0">
                 <div className="col-md-5 d-none d-md-block">
-                  <img src="/Imagenes/Loginmaster.jpeg" alt="Master Tech" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src="https://fgxhqbwqjypgxwwafgam.supabase.co/storage/v1/object/public/Baners/Loginmaster.jpeg" alt="Master Tech" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
                 <div className="col-md-7 bg-dark text-white">
                   <div className="p-4 p-md-5">

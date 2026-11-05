@@ -103,7 +103,7 @@ export const api = {
 
   // Cliente autenticado
   miPerfil: () => get<Perfil>('/api/v1/me'),
-  actualizarPerfil: (d: { nombre: string; direccion: string; numeroTelefono: string; biografia: string }) =>
+  actualizarPerfil: (d: { nombre: string; direccion: string; numeroTelefono: string }) =>
     send<Perfil>('PUT', '/api/v1/me', d),
   cambiarPassword: (d: { passwordActual: string; passwordNuevo: string; passwordConfirm: string }) =>
     send<{ mensaje: string }>('PUT', '/api/v1/me/password', d),

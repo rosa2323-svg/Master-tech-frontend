@@ -69,9 +69,7 @@ export interface Usuario {
   fechaRegistro?: string | null
 }
 
-export interface Perfil extends Usuario {
-  biografia?: string | null
-}
+export type Perfil = Usuario
 
 export interface RegistroData {
   nombre: string

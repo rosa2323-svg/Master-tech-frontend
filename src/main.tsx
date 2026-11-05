@@ -20,7 +20,7 @@ document.addEventListener(
         el.src = IMG_DEFECTO
       }
     },
-    true // importante: los errores de imagen no "suben", hay que escucharlos en la fase de captura
+    true
 )
 
 createRoot(document.getElementById('root')!).render(

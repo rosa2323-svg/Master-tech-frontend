@@ -23,6 +23,7 @@ export interface Categoria {
   id: number
   nombre: string
   descripcion?: string | null
+  imagenUrl?: string | null
 }
 
 export type Rol = 'USER' | 'ADMIN'

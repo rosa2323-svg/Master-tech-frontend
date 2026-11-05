@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Modal } from 'react-bootstrap'
 import { api } from '../../api/client'
 import type { Categoria } from '../../api/types'
@@ -10,15 +10,22 @@ export default function AdminCategorias() {
   const [form, setForm] = useState({ nombre: '', descripcion: '' })
   const [error, setError] = useState<string | null>(null)
   const [guardando, setGuardando] = useState(false)
+  const [imagen, setImagen] = useState<File | null>(null)
+  const [quitarImagen, setQuitarImagen] = useState(false)
   const [porEliminar, setPorEliminar] = useState<Categoria | null>(null)
   const [aviso, setAviso] = useState<{ ok: boolean; texto: string } | null>(null)
 
   useEffect(() => { document.title = 'MASTER TECH | Admin de categorías' }, [])
 
+  // Vista previa de la imagen elegida (se libera al cambiarla o cerrar el modal)
+  const vistaPrevia = useMemo(() => (imagen ? URL.createObjectURL(imagen) : null), [imagen])
+  useEffect(() => () => { if (vistaPrevia) URL.revokeObjectURL(vistaPrevia) }, [vistaPrevia])
+
   const cuenta = (id: number) => productos.filter(p => p.categoriaId === id).length
 
   const abrir = (c: Categoria | 'nueva') => {
     setForm(c === 'nueva' ? { nombre: '', descripcion: '' } : { nombre: c.nombre, descripcion: c.descripcion ?? '' })
+    setImagen(null); setQuitarImagen(false)
     setError(null); setEditando(c)
   }
 
@@ -31,10 +38,20 @@ export default function AdminCategorias() {
     setGuardando(true)
     try {
       const datos = { nombre, descripcion: form.descripcion.trim() }
-      if (editando === 'nueva') await api.crearCategoria(datos)
-      else if (editando) await api.actualizarCategoria(editando.id, datos)
+      const guardada = editando === 'nueva'
+        ? await api.crearCategoria(datos)
+        : await api.actualizarCategoria((editando as Categoria).id, datos)
+      let texto = editando === 'nueva' ? 'Categoría creada.' : 'Categoría actualizada.'
+      let ok = true
+      try {
+        if (imagen) await api.subirImagenCategoria(guardada.id, imagen)
+        else if (quitarImagen && editando !== 'nueva' && (editando as Categoria).imagenUrl) await api.quitarImagenCategoria(guardada.id)
+      } catch (err) {
+        ok = false
+        texto += ` Pero la imagen no se pudo actualizar: ${err instanceof Error ? err.message : 'error'}.`
+      }
       await recargar()
-      setAviso({ ok: true, texto: editando === 'nueva' ? 'Categoría creada.' : 'Categoría actualizada.' })
+      setAviso({ ok, texto })
       setEditando(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo guardar.')
@@ -75,15 +92,18 @@ export default function AdminCategorias() {
 
       <div className="tabla-envoltorio">
         <table className="tabla-admin">
-          <thead><tr><th>#</th><th>Nombre</th><th>Descripción</th><th>Productos</th><th>Acciones</th></tr></thead>
+          <thead><tr><th>#</th><th>Imagen</th><th>Nombre</th><th>Descripción</th><th>Productos</th><th>Acciones</th></tr></thead>
           <tbody>
             {categorias.length === 0 ? (
-              <tr><td colSpan={5}><div className="vacio"><i className="bi bi-tags" />{cargando ? 'Cargando…' : 'Aún no hay categorías. Crea la primera con "Nueva categoría".'}</div></td></tr>
+              <tr><td colSpan={6}><div className="vacio"><i className="bi bi-tags" />{cargando ? 'Cargando…' : 'Aún no hay categorías. Crea la primera con "Nueva categoría".'}</div></td></tr>
             ) : categorias.map(c => {
               const n = cuenta(c.id)
               return (
                 <tr key={c.id}>
                   <td className="texto-tenue">{c.id}</td>
+                  <td>{c.imagenUrl
+                    ? <img src={c.imagenUrl} alt={c.nombre} style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8 }} />
+                    : <span className="texto-tenue">—</span>}</td>
                   <td className="fw-semibold">{c.nombre}</td>
                   <td className="texto-tenue">{c.descripcion || '—'}</td>
                   <td>{n === 0
@@ -111,9 +131,30 @@ export default function AdminCategorias() {
               <label className="form-label" htmlFor="cNombre">Nombre</label>
               <input id="cNombre" className="form-control" placeholder="Ej. Laptops" maxLength={100} value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} />
             </div>
-            <div>
+            <div className="mb-3">
               <label className="form-label" htmlFor="cDescripcion">Descripción</label>
               <textarea id="cDescripcion" className="form-control" rows={3} maxLength={255} value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} />
+            </div>
+            <div>
+              <label className="form-label" htmlFor="cImagen">Imagen</label>
+              {(() => {
+                const actual = editando !== null && editando !== 'nueva' && !quitarImagen ? editando.imagenUrl : null
+                const mostrar = vistaPrevia ?? actual
+                return mostrar
+                  ? <div className="mb-2"><img src={mostrar} alt="Imagen de la categoría" style={{ maxWidth: '100%', maxHeight: 140, objectFit: 'cover', borderRadius: 8 }} /></div>
+                  : null
+              })()}
+              <input id="cImagen" type="file" accept="image/jpeg,image/png,image/webp" className="form-control"
+                onChange={e => { setImagen(e.target.files?.[0] ?? null); if (e.target.files?.[0]) setQuitarImagen(false) }} />
+              <div className="form-text">
+                {editando === 'nueva' ? 'Opcional (JPG, PNG o WEBP, máx. 5 MB).' : 'Déjalo vacío para conservar la imagen actual (máx. 5 MB).'}
+              </div>
+              {editando !== null && editando !== 'nueva' && editando.imagenUrl && !imagen && (
+                <div className="form-check mt-2">
+                  <input id="cQuitar" type="checkbox" className="form-check-input" checked={quitarImagen} onChange={e => setQuitarImagen(e.target.checked)} />
+                  <label className="form-check-label" htmlFor="cQuitar">Quitar la imagen actual</label>
+                </div>
+              )}
             </div>
           </Modal.Body>
           <Modal.Footer>

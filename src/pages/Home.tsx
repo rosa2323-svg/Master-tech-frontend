@@ -86,16 +86,16 @@ export default function Home() {
           <h6 className="text-center fw-bold mb-5 text-uppercase" style={{ letterSpacing: '2px' }}>Nuestras Categorías</h6>
           <div className="row text-center justify-content-center g-4">
             {categorias.map(c => {
-              const conImagen = productos.find(p => p.categoriaId === c.id && p.imagenUrl)
+              const imagen = c.imagenUrl || productos.find(p => p.categoriaId === c.id && p.imagenUrl)?.imagenUrl
               return (
-                <div className="col-6 col-sm-4 col-md-2" key={c.id}>
-                  <Link to={rutaCategoria(c)} className="text-decoration-none text-dark d-flex flex-column align-items-center gap-3">
-                    <img src={conImagen ? imagenProducto(conImagen.imagenUrl) : IMG_DEFECTO} alt={c.nombre}
-                         className="img-fluid" style={{ height: '120px', objectFit: 'contain' }}
-                         onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = IMG_DEFECTO }} />
-                    <span className="fw-bold text-uppercase" style={{ fontSize: '13px', letterSpacing: '0.5px' }}>{c.nombre}</span>
-                  </Link>
-                </div>
+                  <div className="col-6 col-sm-4 col-md-2" key={c.id}>
+                    <Link to={rutaCategoria(c)} className="text-decoration-none text-dark d-flex flex-column align-items-center gap-3">
+                      <img src={imagen ? imagenProducto(imagen) : IMG_DEFECTO} alt={c.nombre}
+                           className="img-fluid" style={{ height: '120px', objectFit: 'contain' }}
+                           onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = IMG_DEFECTO }} />
+                      <span className="fw-bold text-uppercase" style={{ fontSize: '13px', letterSpacing: '0.5px' }}>{c.nombre}</span>
+                    </Link>
+                  </div>
               )
             })}
           </div>

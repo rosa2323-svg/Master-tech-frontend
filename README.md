@@ -14,7 +14,7 @@ El backend debe estar en marcha y con `FRONTEND_URL=http://localhost:5173` (CORS
 ## Asistente con IA
 El chat flotante (`src/components/Chatbot.tsx`) habla con el servicio **bot-core** (FastAPI + Gemini, `VITE_BOT_URL`) enviando el mismo JWT de la sesión.
 Requiere haber iniciado sesión: el historial y las preferencias de cada cliente se guardan en el servidor (no en el navegador).
-Al abrir el chat se repinta la última conversación; el botón ↺ abre una nueva y 🗑 borra el historial y lo que el asistente recuerda.
+Al abrir el chat se repinta la última conversación; el botón de carga abre una nueva y tacho borra el historial y lo que el asistente recuerda.
 El bot **no** agrega al carrito ni cobra: muestra tarjetas de producto con "Ver" y "Agregar". Detalles en `bot-core/README.md`.
 
 ## Estructura

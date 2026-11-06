@@ -10,6 +10,18 @@ import { AlertProvider } from './context/AlertContext'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { CatalogProvider } from './context/CatalogContext'
+import { IMG_DEFECTO } from './utils/format'
+
+document.addEventListener(
+    'error',
+    (e) => {
+      const el = e.target
+      if (el instanceof HTMLImageElement && !el.src.endsWith(IMG_DEFECTO)) {
+        el.src = IMG_DEFECTO
+      }
+    },
+    true
+)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -25,17 +25,17 @@ interface Pack {
 
 const PACKS: Pack[] = [
   {
-    clave: 'laptop', icono: 'bi-laptop', titulo: 'Pack Laptop Pro', cabecera: 'Laptop', imagen: '/Imagenes/laptoppromo.jpeg',
+    clave: 'laptop', icono: 'bi-laptop', titulo: 'Pack Laptop Pro', cabecera: 'Laptop', imagen: 'https://fgxhqbwqjypgxwwafgam.supabase.co/storage/v1/object/public/Productos/Lenovo%20LOQ.PNG',
     puntos: ['Laptop Lenovo LOQ Essential AMD Ryzen 7 16GB RAM 512GB', 'Mouse + mochila de regalo', 'Garantía Oficial 12 meses'],
     antes: 'S/ 4,499', ahora: 'S/ 3,899', etiqueta: 'AHORRA S/ 550', palabras: ['laptop', 'computadora'],
   },
   {
-    clave: 'telefono', icono: 'bi-phone', titulo: 'Pack Teléfono + Tablet', cabecera: 'Teléfonos y Tablets', imagen: '/Imagenes/telefonopromo.jpg',
+    clave: 'telefono', icono: 'bi-phone', titulo: 'Pack Teléfono + Tablet', cabecera: 'Teléfonos y Tablets', imagen: 'https://fgxhqbwqjypgxwwafgam.supabase.co/storage/v1/object/public/Productos/telefono_tablet.jpg',
     puntos: ['Smartphone gama media/alta (Android o iOS)', 'Tablet compatible, ideal para trabajo o estudio', 'Garantía Oficial 12 meses'],
     antes: 'S/ 2,199', ahora: 'S/ 1,799', etiqueta: 'AHORRA S/ 400', palabras: ['telefono', 'celular'],
   },
   {
-    clave: 'consola', icono: 'bi-controller', titulo: 'Consola Sony PlayStation 5 Slim Blanco 4K 825 GB Digital', cabecera: 'Consola', imagen: '/Imagenes/ps5.jpg',
+    clave: 'consola', icono: 'bi-controller', titulo: 'Consola Sony PlayStation 5 Slim Blanco 4K 825 GB Digital', cabecera: 'Consola', imagen: 'https://fgxhqbwqjypgxwwafgam.supabase.co/storage/v1/object/public/Productos/ps5.jpg',
     puntos: ['Edición digital, sin lector de discos', 'Resolución 4K y 825 GB de almacenamiento SSD', 'Color blanco, modelo Slim'],
     antes: 'S/ 2,669', ahora: 'S/ 2,199', etiqueta: 'APROVECHA', palabras: ['consola'],
   },
@@ -86,16 +86,16 @@ export default function Home() {
           <h6 className="text-center fw-bold mb-5 text-uppercase" style={{ letterSpacing: '2px' }}>Nuestras Categorías</h6>
           <div className="row text-center justify-content-center g-4">
             {categorias.map(c => {
-              const conImagen = productos.find(p => p.categoriaId === c.id && p.imagenUrl)
+              const imagen = c.imagenUrl || productos.find(p => p.categoriaId === c.id && p.imagenUrl)?.imagenUrl
               return (
-                <div className="col-6 col-sm-4 col-md-2" key={c.id}>
-                  <Link to={rutaCategoria(c)} className="text-decoration-none text-dark d-flex flex-column align-items-center gap-3">
-                    <img src={conImagen ? imagenProducto(conImagen.imagenUrl) : IMG_DEFECTO} alt={c.nombre}
-                         className="img-fluid" style={{ height: '120px', objectFit: 'contain' }}
-                         onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = IMG_DEFECTO }} />
-                    <span className="fw-bold text-uppercase" style={{ fontSize: '13px', letterSpacing: '0.5px' }}>{c.nombre}</span>
-                  </Link>
-                </div>
+                  <div className="col-6 col-sm-4 col-md-2" key={c.id}>
+                    <Link to={rutaCategoria(c)} className="text-decoration-none text-dark d-flex flex-column align-items-center gap-3">
+                      <img src={imagen ? imagenProducto(imagen) : IMG_DEFECTO} alt={c.nombre}
+                           className="img-fluid" style={{ height: '120px', objectFit: 'contain' }}
+                           onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = IMG_DEFECTO }} />
+                      <span className="fw-bold text-uppercase" style={{ fontSize: '13px', letterSpacing: '0.5px' }}>{c.nombre}</span>
+                    </Link>
+                  </div>
               )
             })}
           </div>
@@ -182,7 +182,7 @@ export default function Home() {
             ¡Nuevo Lanzamiento en Master Tech!
           </p>
           <div className="d-flex justify-content-center mb-4">
-            <img src="/Imagenes/iPhone256.jpg" className="img-fluid rounded-3 shadow-sm" style={{ maxHeight: '400px' }} alt="Promo" />
+            <img src="https://fgxhqbwqjypgxwwafgam.supabase.co/storage/v1/object/public/Productos/prod_0e882f18-463d-4316-ae96-7bde3156523c.jpg" className="img-fluid rounded-3 shadow-sm" style={{ maxHeight: '400px' }} alt="Promo" />
           </div>
           <p className="fs-5 px-3 mb-4" style={{ fontWeight: 400, lineHeight: 1.4 }}>
             iPhone 17 Pro max ya está disponible. <br /><strong>¡No te quedes sin el tuyo!</strong>

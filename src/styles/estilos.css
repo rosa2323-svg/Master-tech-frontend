@@ -107,6 +107,14 @@ h6 { font-size: var(--fs-h6); font-weight: var(--fw-medium); }
 .navbar .bi:hover {
     color: var(--color-hover);
 }
+/* Íconos dentro del menú desplegable (fondo blanco) */
+.navbar .dropdown-menu .bi {
+    color: var(--color-secundario);
+}
+
+.navbar .dropdown-menu .dropdown-item:hover .bi {
+    color: var(--color-hover);
+}
 
 .navbar-nav .nav-link.px-4 {
     padding-left: 0.5rem !important;

@@ -61,7 +61,7 @@ export default function Profile() {
     try {
       const p = await api.actualizarPerfil({
         nombre: datos.nombre.trim(), direccion: datos.direccion.trim(),
-        numeroTelefono: datos.telefono, biografia: perfil?.biografia ?? '',
+        numeroTelefono: datos.telefono,
       })
       setPerfil(p)
       setDatosOk(true)

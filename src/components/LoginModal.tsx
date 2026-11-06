@@ -39,7 +39,7 @@ export default function LoginModal() {
     <Modal show={loginAbierto} onHide={cerrar} centered contentClassName="border-0 shadow-lg rounded-4 overflow-hidden">
       <div className="row g-0">
         <div className="col-md-5 d-none d-md-block">
-          <img src="/Imagenes/Loginmaster.jpeg" alt="Master Tech Login"
+          <img src="https://fgxhqbwqjypgxwwafgam.supabase.co/storage/v1/object/public/Baners/Loginmaster.jpeg" alt="Master Tech Login"
                style={{ width: '120%', height: '100%', objectFit: 'cover' }} />
         </div>
         <div className="col-md-7 bg-dark text-white">

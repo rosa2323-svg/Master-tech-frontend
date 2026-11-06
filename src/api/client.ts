@@ -94,6 +94,12 @@ export const api = {
   actualizarCategoria: (id: number, d: { nombre: string; descripcion?: string }) =>
     send<Categoria>('PUT', `/api/v1/categorias/${id}`, d),
   eliminarCategoria: (id: number) => send<void>('DELETE', `/api/v1/categorias/${id}`),
+  subirImagenCategoria: (id: number, archivo: File) => {
+    const form = new FormData()
+    form.append('imagen', archivo)
+    return peticion<Categoria>(`/api/v1/categorias/${id}/imagen`, { method: 'POST', form })
+  },
+  quitarImagenCategoria: (id: number) => send<Categoria>('DELETE', `/api/v1/categorias/${id}/imagen`),
 
   // Admin: usuarios y ventas
   usuarios: () => get<Usuario[]>('/api/v1/usuarios'),
@@ -103,7 +109,7 @@ export const api = {
 
   // Cliente autenticado
   miPerfil: () => get<Perfil>('/api/v1/me'),
-  actualizarPerfil: (d: { nombre: string; direccion: string; numeroTelefono: string; biografia: string }) =>
+  actualizarPerfil: (d: { nombre: string; direccion: string; numeroTelefono: string }) =>
     send<Perfil>('PUT', '/api/v1/me', d),
   cambiarPassword: (d: { passwordActual: string; passwordNuevo: string; passwordConfirm: string }) =>
     send<{ mensaje: string }>('PUT', '/api/v1/me/password', d),

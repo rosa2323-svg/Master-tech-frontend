@@ -1,60 +1,38 @@
-\## Contexto y Objetivo
+## Contexto y objetivo
 
-<!-- Describe brevemente qué problema resuelve este PR o cuál es la meta -->
+<!-- Qué problema resuelve este PR o cuál es la meta -->
 
+Issue relacionado: Closes #
 
+---
 
-Tarjeta de Trello: 
-
-
-
-\---
-
-
-
-\## Cambios Realizados
+## Cambios realizados
 
 <!-- Lista los cambios clave que hiciste en el código -->
 
-\- 
+-
 
+---
 
-
-\---
-
-
-
-\## Cómo Probar los Cambios
+## Cómo probar los cambios
 
 <!-- Pasos claros para que el revisor verifique el funcionamiento -->
 
-1\. 
+1.
+2.
 
-2\. 
+---
 
-
-
-\---
-
-
-
-\## Evidencia (Capturas o GIF)
+## Evidencia (capturas o GIF)
 
 <!-- Opcional: imágenes o videos que demuestren el cambio visual o funcional -->
 
+---
 
+## Checklist antes de solicitar revisión
 
-
-
-\---
-
-
-
-\## Checklist antes de solicitar revisión
-
-\- \[ ] El código sigue los estándares de estilo del proyecto.
-
-\- \[ ] Probado localmente en navegador de escritorio y móvil.
-
-\- \[ ] No genera errores o advertencias en la consola.
-
+- [ ] El código sigue los estándares de estilo del proyecto.
+- [ ] `npm run build` termina sin errores.
+- [ ] Probado localmente en navegador de escritorio y móvil.
+- [ ] No genera errores o advertencias en la consola.
+- [ ] No incluye secretos ni claves.

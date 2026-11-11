@@ -2,10 +2,52 @@ import type {
   BotHistorial, BotRespuesta, Categoria, Perfil, Producto, ProductoInput, RegistroData, Rol, Sesion, Usuario, Venta,
 } from './types'
 
-export const API_URL = (import.meta.env.VITE_API_URL ?? 'http://localhost:8089').replace(/\/$/, '')
+// Cada variable admite UNA o VARIAS URLs separadas por coma, en orden de preferencia:
+//   VITE_API_URL=http://localhost:8089,https://temporal-l5hx.onrender.com
+// Se usa la primera que responda; si falla (sin conexión o 502/503/504) se prueba la siguiente.
+const listaUrls = (valor: string | undefined, defecto: string) =>
+  (valor || defecto).split(',').map(u => u.trim().replace(/\/$/, '')).filter(Boolean)
+
+export const API_URLS = listaUrls(import.meta.env.VITE_API_URL, 'http://localhost:8089')
 
 /** Servicio del asistente con IA (Python/FastAPI). Valida el MISMO JWT que emite Spring. */
-export const BOT_URL = (import.meta.env.VITE_BOT_URL ?? 'http://localhost:8090').replace(/\/$/, '')
+export const BOT_URLS = listaUrls(import.meta.env.VITE_BOT_URL, 'http://localhost:8090')
+
+const ESPERA_CANDIDATA_MS = 6_000
+
+/**
+ * Devuelve un `fetch` que prueba las URLs en orden y recuerda la última que funcionó.
+ * Solo salta a la siguiente si no hubo respuesta (error de red) o el servidor está caído/dormido (502/503/504):
+ * un 401, 404 o 500 son respuestas reales y NO se reintentan en otro servidor. Las peticiones que modifican datos
+ * (POST/PUT/PATCH/DELETE) no se cortan antes de `esperaFinalMs` (0 = sin límite), para no duplicarlas.
+ */
+function fetchConRespaldo(urls: string[], esperaFinalMs = 0) {
+  let activa = 0
+  return async (ruta: string, init: RequestInit): Promise<Response> => {
+    const esGet = (init.method ?? 'GET') === 'GET'
+    let ultimoError: unknown = new Error('sin URLs configuradas')
+    for (let n = 0; n < urls.length; n++) {
+      const i = (activa + n) % urls.length
+      const ultima = n === urls.length - 1
+      const ms = !ultima && esGet ? ESPERA_CANDIDATA_MS : esperaFinalMs
+      const control = new AbortController()
+      const reloj = ms > 0 ? setTimeout(() => control.abort(), ms) : null
+      try {
+        const resp = await fetch(`${urls[i]}${ruta}`, { ...init, signal: control.signal })
+        if (!ultima && [502, 503, 504].includes(resp.status)) { ultimoError = new Error(`HTTP ${resp.status}`); continue }
+        activa = i
+        return resp
+      } catch (e) {
+        ultimoError = e
+      } finally {
+        if (reloj) clearTimeout(reloj)
+      }
+    }
+    throw ultimoError
+  }
+}
+
+const fetchApi = fetchConRespaldo(API_URLS)
 
 const CLAVE_TOKEN = 'mastertech_token'
 
@@ -41,7 +83,7 @@ async function peticion<T>(ruta: string, { method = 'GET', body, form }: Opcione
 
   let resp: Response
   try {
-    resp = await fetch(`${API_URL}${ruta}`, {
+    resp = await fetchApi(ruta, {
       method,
       headers,
       body: form ?? (body !== undefined ? JSON.stringify(body) : undefined),
@@ -126,6 +168,7 @@ export const api = {
 // secreto JWT mal configurado en el bot y no un token vencido); el chat muestra un aviso y ya.
 // Mayor que el presupuesto del servidor (BOT_CHAT_BUDGET_S, 50 s): el servidor responde con un aviso antes de que el navegador corte.
 const ESPERA_BOT_MS = 65_000
+const fetchBot = fetchConRespaldo(BOT_URLS, ESPERA_BOT_MS)
 
 async function peticionBot<T>(ruta: string, { method = 'GET', body }: { method?: string; body?: unknown } = {}): Promise<T> {
   const headers: Record<string, string> = {}
@@ -133,18 +176,11 @@ async function peticionBot<T>(ruta: string, { method = 'GET', body }: { method?:
   if (token) headers.Authorization = `Bearer ${token}`
   if (body !== undefined) headers['Content-Type'] = 'application/json'
 
-  const control = new AbortController()
-  const reloj = setTimeout(() => control.abort(), ESPERA_BOT_MS)
   let resp: Response
   try {
-    resp = await fetch(`${BOT_URL}${ruta}`, {
-      method, headers, signal: control.signal,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    })
+    resp = await fetchBot(ruta, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined })
   } catch {
     throw new ApiError(0, 'No se pudo conectar con el asistente.')
-  } finally {
-    clearTimeout(reloj)
   }
 
   if (resp.status === 204) return undefined as T

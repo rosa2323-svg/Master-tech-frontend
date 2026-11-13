@@ -1,5 +1,5 @@
 import type {
-  AgrupacionTendencia, PuntoTendencia, BotHistorial, BotRespuesta, Categoria, Perfil, Producto, ProductoInput, RegistroData, Rol, Sesion, Usuario, Venta,
+  AgrupacionTendencia, PuntoTendencia, IngresoDiario, ProductosVendidos, BotHistorial, BotRespuesta, Categoria, Perfil, Producto, ProductoInput, RegistroData, Rol, Sesion, Usuario, Venta,
 } from './types'
 
 // Cada variable admite UNA o VARIAS URLs separadas por coma, en orden de preferencia:
@@ -148,6 +148,13 @@ export const api = {
   cambiarRol: (id: number, rol: Rol) => send<Usuario>('PATCH', `/api/v1/usuarios/${id}`, { rol }),
   eliminarUsuario: (id: number) => send<void>('DELETE', `/api/v1/usuarios/${id}`),
   ventas: () => get<Venta[]>('/api/v1/ventas'),
+  productosVendidos: (desde?: string, hasta?: string) => {
+    const q = new URLSearchParams()
+    if (desde) q.set('desde', desde)
+    if (hasta) q.set('hasta', hasta)
+    return get<ProductosVendidos>(`/api/v1/dashboard/productos-vendidos?${q}`)
+  },
+  ingresoDiario: () => get<IngresoDiario>('/api/v1/dashboard/ingreso-diario'),
   tendencias: (agrupar: AgrupacionTendencia, desde?: string, hasta?: string) => {
     const q = new URLSearchParams({ agrupar })
     if (desde) q.set('desde', desde)

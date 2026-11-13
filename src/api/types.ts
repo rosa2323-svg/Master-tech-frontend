@@ -91,6 +91,25 @@ export interface PuntoTendencia {
   ingreso: number
 }
 
+export interface ItemVendido {
+  id: number
+  nombre: string
+  unidades: number
+  ingreso: number
+}
+
+export interface ProductosVendidos {
+  totalUnidades: number
+  porCategoria: ItemVendido[]
+  topProductos: ItemVendido[]
+}
+
+export interface IngresoDiario {
+  hoy: number
+  ayer: number
+  variacionPct: number | null
+}
+
 // ---- Asistente (bot-core): http://localhost:8090 ----
 /** Acción de interfaz que acompaña a una respuesta. Hoy: { type: 'products', ids } = tarjetas de producto. */
 export interface BotAccion {

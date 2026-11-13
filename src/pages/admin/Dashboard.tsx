@@ -4,7 +4,7 @@ import {
 } from 'chart.js'
 import { Bar, Line } from 'react-chartjs-2'
 import { api } from '../../api/client'
-import type { AgrupacionTendencia, PuntoTendencia, Usuario, Venta } from '../../api/types'
+import type { AgrupacionTendencia, IngresoDiario, ProductosVendidos, PuntoTendencia, Usuario, Venta } from '../../api/types'
 import { formatoSoles } from '../../utils/format'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Tooltip, Legend)
@@ -35,13 +35,15 @@ export default function AdminDashboard() {
   const [agrupar, setAgrupar] = useState<AgrupacionTendencia>('dia')
   const [metrica, setMetrica] = useState<Metrica>('unidades')
   const [tendencia, setTendencia] = useState<PuntoTendencia[]>([])
+  const [ingresoDia, setIngresoDia] = useState<IngresoDiario | null>(null)
+  const [vendidos, setVendidos] = useState<ProductosVendidos | null>(null)
 
   useEffect(() => { document.title = 'MASTER TECH | Dashboard' }, [])
   useEffect(() => {
     Promise.all([api.ventas(), api.usuarios()])
-      .then(([v, u]) => { setVentas(v); setUsuarios(u) })
-      .catch(e => setError(e instanceof Error ? e.message : 'No se pudieron cargar los datos.'))
-      .finally(() => setCargando(false))
+        .then(([v, u]) => { setVentas(v); setUsuarios(u) })
+        .catch(e => setError(e instanceof Error ? e.message : 'No se pudieron cargar los datos.'))
+        .finally(() => setCargando(false))
   }, [])
 
   useEffect(() => {
@@ -53,6 +55,22 @@ export default function AdminDashboard() {
         .catch(e => { if (vigente) setError(e instanceof Error ? e.message : 'No se pudo cargar la tendencia.') })
     return () => { vigente = false }
   }, [dias, agrupar])
+
+  useEffect(() => {
+    api.ingresoDiario()
+        .then(setIngresoDia)
+        .catch(e => setError(e instanceof Error ? e.message : 'No se pudo cargar el ingreso diario.'))
+  }, [])
+
+  useEffect(() => {
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
+    const desde = new Date(hoy); desde.setDate(hoy.getDate() - (dias - 1))
+    let vigente = true
+    api.productosVendidos(clave(desde), clave(hoy))
+        .then(p => { if (vigente) setVendidos(p) })
+        .catch(e => { if (vigente) setError(e instanceof Error ? e.message : 'No se pudieron cargar los productos vendidos.') })
+    return () => { vigente = false }
+  }, [dias])
 
   const datos = useMemo(() => {
     const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
@@ -93,6 +111,10 @@ export default function AdminDashboard() {
   }, [ventas, usuarios, dias])
 
   const opciones = { responsive: true, plugins: { legend: { display: true } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+
+  const maxCategoria = Math.max(1, ...(vendidos?.porCategoria.map(c => c.unidades) ?? []))
+  const sube = (ingresoDia?.variacionPct ?? 0) >= 0
+
   const opcionesBarras = {
     responsive: true,
     plugins: {
@@ -111,68 +133,112 @@ export default function AdminDashboard() {
   }
 
   return (
-    <>
-      <div className="admin-encabezado">
-        <div>
-          <h1 className="admin-titulo">Indicadores (KPI)</h1>
-          <p className="admin-subtitulo">Resumen de ventas y usuarios de Master Tech, calculado con los datos reales de la tienda.</p>
-        </div>
-        <div>
-          <div className="btn-group" role="group" id="filtroDias" aria-label="Filtro de tiempo">
-            {DIAS.map(d => (
-              <button key={d} type="button" className={`btn btn-outline-dark ${dias === d ? 'active' : ''}`} aria-pressed={dias === d}
-                      onClick={() => setDias(d)}>{d} días</button>
-            ))}
+      <>
+        <div className="admin-encabezado">
+          <div>
+            <h1 className="admin-titulo">Indicadores (KPI)</h1>
+            <p className="admin-subtitulo">Resumen de ventas y usuarios de Master Tech, calculado con los datos reales de la tienda.</p>
           </div>
-          <div className="texto-tenue small mt-1 text-end">Del {datos.desde} al {datos.hasta}</div>
-        </div>
-      </div>
-
-      {error && <div className="alert alert-danger">{error}</div>}
-
-      <div className="row g-3 mb-4">
-        <div className="col-12 col-md-4"><div className="card shadow-sm h-100"><div className="card-body">
-          <p className="text-muted small mb-1">Producto más vendido</p>
-          <h5 className="fw-bold mb-1">{cargando ? '-' : datos.top ? datos.top[0] : 'Sin ventas en el periodo'}</h5>
-          <small className="text-muted">{datos.top ? `${datos.top[1]} unidades` : ''}</small>
-        </div></div></div>
-        <div className="col-6 col-md-4"><div className="card shadow-sm h-100"><div className="card-body">
-          <p className="text-muted small mb-1">Clientes con compra (promedio diario)</p>
-          <h3 className="fw-bold mb-0">{cargando ? '-' : datos.promedioCompradores.toFixed(1)}</h3>
-        </div></div></div>
-        <div className="col-6 col-md-4"><div className="card shadow-sm h-100"><div className="card-body">
-          <p className="text-muted small mb-1">Usuarios nuevos (total del periodo)</p>
-          <h3 className="fw-bold mb-0">{cargando ? '-' : datos.totalNuevos}</h3>
-        </div></div></div>
-      </div>
-
-      <div className="row g-4">
-        <div className="col-12 col-lg-6"><div className="card shadow-sm"><div className="card-body">
-          <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-            <h6 className="fw-bold mb-0">Tendencia de ventas</h6>
-            <div className="d-flex gap-2">
-              <select className="form-select form-select-sm" aria-label="Métrica" value={metrica}
-                      onChange={e => setMetrica(e.target.value as Metrica)}>
-                {(Object.keys(METRICAS) as Metrica[]).map(m => <option key={m} value={m}>{METRICAS[m].texto}</option>)}
-              </select>
-              <select className="form-select form-select-sm" aria-label="Agrupar por" value={agrupar}
-                      onChange={e => setAgrupar(e.target.value as AgrupacionTendencia)}>
-                {AGRUPACIONES.map(g => <option key={g.valor} value={g.valor}>{g.texto}</option>)}
-              </select>
+          <div>
+            <div className="btn-group" role="group" id="filtroDias" aria-label="Filtro de tiempo">
+              {DIAS.map(d => (
+                  <button key={d} type="button" className={`btn btn-outline-dark ${dias === d ? 'active' : ''}`} aria-pressed={dias === d}
+                          onClick={() => setDias(d)}>{d} días</button>
+              ))}
             </div>
+            <div className="texto-tenue small mt-1 text-end">Del {datos.desde} al {datos.hasta}</div>
           </div>
-          <Bar options={opcionesBarras} data={{ labels: tendencia.map(p => p.etiqueta), datasets: [
-              { label: METRICAS[metrica].texto, data: tendencia.map(p => p[metrica]), backgroundColor: METRICAS[metrica].color, borderRadius: 4, maxBarThickness: 28 },
-            ] }} aria-label="Gráfico de barras con la tendencia de ventas" role="img" />
-        </div></div></div>
-        <div className="col-12 col-lg-6"><div className="card shadow-sm"><div className="card-body">
-          <h6 className="fw-bold">Clientes con compra y usuarios nuevos</h6>
-          <Line options={opciones} data={{ labels: datos.etiquetas, datasets: [
-            { label: 'Clientes con compra', data: datos.compradores, borderColor: '#06d6a0', backgroundColor: '#06d6a0', tension: 0.3 },
-            { label: 'Usuarios nuevos', data: datos.nuevos, borderColor: '#ffd166', backgroundColor: '#ffd166', tension: 0.3 },
-          ] }} aria-label="Gráfico de líneas con clientes con compra y usuarios nuevos por día" role="img" />
-        </div></div></div>
-      </div>
-    </>
+        </div>
+
+        {error && <div className="alert alert-danger">{error}</div>}
+
+        <div className="row g-3 mb-4">
+          <div className="col-12 col-md-4"><div className="card shadow-sm h-100"><div className="card-body">
+            <p className="text-muted small mb-1">Producto más vendido</p>
+            <h5 className="fw-bold mb-1">{cargando ? '-' : datos.top ? datos.top[0] : 'Sin ventas en el periodo'}</h5>
+            <small className="text-muted">{datos.top ? `${datos.top[1]} unidades` : ''}</small>
+          </div></div></div>
+          <div className="col-6 col-md-4"><div className="card shadow-sm h-100"><div className="card-body">
+            <p className="text-muted small mb-1">Clientes con compra (promedio diario)</p>
+            <h3 className="fw-bold mb-0">{cargando ? '-' : datos.promedioCompradores.toFixed(1)}</h3>
+          </div></div></div>
+          <div className="col-6 col-md-4"><div className="card shadow-sm h-100"><div className="card-body">
+            <p className="text-muted small mb-1">Usuarios nuevos (total del periodo)</p>
+            <h3 className="fw-bold mb-0">{cargando ? '-' : datos.totalNuevos}</h3>
+          </div></div></div>
+        </div>
+
+        <div className="row g-3 mb-4">
+          <div className="col-12 col-lg-4"><div className="card shadow-sm h-100"><div className="card-body">
+            <p className="text-muted small mb-1">Ingreso diario (hoy)</p>
+            <h3 className="fw-bold mb-1">{ingresoDia ? formatoSoles(ingresoDia.hoy) : '-'}</h3>
+            {ingresoDia && (
+                ingresoDia.variacionPct == null
+                    ? <small className="text-muted">Sin ingreso ayer para comparar</small>
+                    : <small className={sube ? 'text-success' : 'text-danger'}>
+                      {sube ? '▲' : '▼'} {Math.abs(ingresoDia.variacionPct)}% vs ayer ({formatoSoles(ingresoDia.ayer)})
+                    </small>
+            )}
+          </div></div></div>
+          <div className="col-12 col-lg-8"><div className="card shadow-sm h-100"><div className="card-body">
+            <div className="d-flex justify-content-between align-items-baseline mb-2">
+              <h6 className="fw-bold mb-0">Productos vendidos</h6>
+              <span className="text-muted small">{vendidos ? `${vendidos.totalUnidades} unidades en el periodo` : '-'}</span>
+            </div>
+            <div className="row g-4">
+              <div className="col-12 col-md-6">
+                <p className="text-muted small mb-2">Por categoría</p>
+                {vendidos?.porCategoria.length === 0 && <small className="text-muted">Sin ventas en el periodo</small>}
+                {vendidos?.porCategoria.map(c => (
+                    <div key={c.id} className="mb-2">
+                      <div className="d-flex justify-content-between small">
+                        <span>{c.nombre}</span><span>{c.unidades} u. · {formatoSoles(c.ingreso)}</span>
+                      </div>
+                      <div className="progress" style={{ height: 6 }} role="progressbar" aria-label={`${c.nombre}: ${c.unidades} unidades`}>
+                        <div className="progress-bar" style={{ width: `${(c.unidades / maxCategoria) * 100}%`, backgroundColor: '#d62839' }} />
+                      </div>
+                    </div>
+                ))}
+              </div>
+              <div className="col-12 col-md-6">
+                <p className="text-muted small mb-2">Top 5 productos</p>
+                <ol className="ps-3 mb-0">
+                  {vendidos?.topProductos.map(p => (
+                      <li key={p.id} className="small">{p.nombre} <span className="text-muted">— {p.unidades} u. ({formatoSoles(p.ingreso)})</span></li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+          </div></div></div>
+        </div>
+
+        <div className="row g-4">
+          <div className="col-12 col-lg-6"><div className="card shadow-sm"><div className="card-body">
+            <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+              <h6 className="fw-bold mb-0">Tendencia de ventas</h6>
+              <div className="d-flex gap-2">
+                <select className="form-select form-select-sm" aria-label="Métrica" value={metrica}
+                        onChange={e => setMetrica(e.target.value as Metrica)}>
+                  {(Object.keys(METRICAS) as Metrica[]).map(m => <option key={m} value={m}>{METRICAS[m].texto}</option>)}
+                </select>
+                <select className="form-select form-select-sm" aria-label="Agrupar por" value={agrupar}
+                        onChange={e => setAgrupar(e.target.value as AgrupacionTendencia)}>
+                  {AGRUPACIONES.map(g => <option key={g.valor} value={g.valor}>{g.texto}</option>)}
+                </select>
+              </div>
+            </div>
+            <Bar options={opcionesBarras} data={{ labels: tendencia.map(p => p.etiqueta), datasets: [
+                { label: METRICAS[metrica].texto, data: tendencia.map(p => p[metrica]), backgroundColor: METRICAS[metrica].color, borderRadius: 4, maxBarThickness: 28 },
+              ] }} aria-label="Gráfico de barras con la tendencia de ventas" role="img" />
+          </div></div></div>
+          <div className="col-12 col-lg-6"><div className="card shadow-sm"><div className="card-body">
+            <h6 className="fw-bold">Clientes con compra y usuarios nuevos</h6>
+            <Line options={opciones} data={{ labels: datos.etiquetas, datasets: [
+                { label: 'Clientes con compra', data: datos.compradores, borderColor: '#06d6a0', backgroundColor: '#06d6a0', tension: 0.3 },
+                { label: 'Usuarios nuevos', data: datos.nuevos, borderColor: '#ffd166', backgroundColor: '#ffd166', tension: 0.3 },
+              ] }} aria-label="Gráfico de líneas con clientes con compra y usuarios nuevos por día" role="img" />
+          </div></div></div>
+        </div>
+      </>
   )
 }

@@ -81,6 +81,16 @@ export interface RegistroData {
   numeroTelefono: string
 }
 
+export type AgrupacionTendencia = 'dia' | 'semana' | 'mes'
+
+export interface PuntoTendencia {
+  periodo: string
+  etiqueta: string
+  ordenes: number
+  unidades: number
+  ingreso: number
+}
+
 // ---- Asistente (bot-core): http://localhost:8090 ----
 /** Acción de interfaz que acompaña a una respuesta. Hoy: { type: 'products', ids } = tarjetas de producto. */
 export interface BotAccion {

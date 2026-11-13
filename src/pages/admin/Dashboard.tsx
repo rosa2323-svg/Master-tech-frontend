@@ -1,14 +1,28 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Tooltip,
+  BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Tooltip,
 } from 'chart.js'
-import { Line } from 'react-chartjs-2'
+import { Bar, Line } from 'react-chartjs-2'
 import { api } from '../../api/client'
-import type { Usuario, Venta } from '../../api/types'
+import type { AgrupacionTendencia, PuntoTendencia, Usuario, Venta } from '../../api/types'
+import { formatoSoles } from '../../utils/format'
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend)
+ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Tooltip, Legend)
 
 const DIAS = [30, 60, 90] as const
+
+const METRICAS = {
+  unidades: { texto: 'Unidades vendidas', color: '#d62839' },
+  ordenes: { texto: 'Órdenes', color: '#ffd166' },
+  ingreso: { texto: 'Ingreso (S/)', color: '#06d6a0' },
+} as const
+type Metrica = keyof typeof METRICAS
+
+const AGRUPACIONES: { valor: AgrupacionTendencia; texto: string }[] = [
+  { valor: 'dia', texto: 'Por día' },
+  { valor: 'semana', texto: 'Por semana' },
+  { valor: 'mes', texto: 'Por mes' },
+]
 
 const clave = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
@@ -18,6 +32,9 @@ export default function AdminDashboard() {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dias, setDias] = useState<number>(30)
+  const [agrupar, setAgrupar] = useState<AgrupacionTendencia>('dia')
+  const [metrica, setMetrica] = useState<Metrica>('unidades')
+  const [tendencia, setTendencia] = useState<PuntoTendencia[]>([])
 
   useEffect(() => { document.title = 'MASTER TECH | Dashboard' }, [])
   useEffect(() => {
@@ -26,6 +43,16 @@ export default function AdminDashboard() {
       .catch(e => setError(e instanceof Error ? e.message : 'No se pudieron cargar los datos.'))
       .finally(() => setCargando(false))
   }, [])
+
+  useEffect(() => {
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
+    const desde = new Date(hoy); desde.setDate(hoy.getDate() - (dias - 1))
+    let vigente = true
+    api.tendencias(agrupar, clave(desde), clave(hoy))
+        .then(t => { if (vigente) setTendencia(t) })
+        .catch(e => { if (vigente) setError(e instanceof Error ? e.message : 'No se pudo cargar la tendencia.') })
+    return () => { vigente = false }
+  }, [dias, agrupar])
 
   const datos = useMemo(() => {
     const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
@@ -66,6 +93,22 @@ export default function AdminDashboard() {
   }, [ventas, usuarios, dias])
 
   const opciones = { responsive: true, plugins: { legend: { display: true } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+  const opcionesBarras = {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (c: { parsed: { y: number | null } }) =>
+              metrica === 'ingreso' ? formatoSoles(c.parsed.y ?? 0) : String(c.parsed.y ?? 0),
+        },
+      },
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 12, maxRotation: 0 } },
+      y: { beginAtZero: true, ticks: { precision: 0 } },
+    },
+  }
 
   return (
     <>
@@ -105,10 +148,22 @@ export default function AdminDashboard() {
 
       <div className="row g-4">
         <div className="col-12 col-lg-6"><div className="card shadow-sm"><div className="card-body">
-          <h6 className="fw-bold">Unidades vendidas por día</h6>
-          <Line options={opciones} data={{ labels: datos.etiquetas, datasets: [
-            { label: 'Unidades vendidas', data: datos.unidades, borderColor: '#d62839', backgroundColor: '#d62839', tension: 0.3 },
-          ] }} aria-label="Gráfico de líneas con las unidades vendidas por día" role="img" />
+          <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+            <h6 className="fw-bold mb-0">Tendencia de ventas</h6>
+            <div className="d-flex gap-2">
+              <select className="form-select form-select-sm" aria-label="Métrica" value={metrica}
+                      onChange={e => setMetrica(e.target.value as Metrica)}>
+                {(Object.keys(METRICAS) as Metrica[]).map(m => <option key={m} value={m}>{METRICAS[m].texto}</option>)}
+              </select>
+              <select className="form-select form-select-sm" aria-label="Agrupar por" value={agrupar}
+                      onChange={e => setAgrupar(e.target.value as AgrupacionTendencia)}>
+                {AGRUPACIONES.map(g => <option key={g.valor} value={g.valor}>{g.texto}</option>)}
+              </select>
+            </div>
+          </div>
+          <Bar options={opcionesBarras} data={{ labels: tendencia.map(p => p.etiqueta), datasets: [
+              { label: METRICAS[metrica].texto, data: tendencia.map(p => p[metrica]), backgroundColor: METRICAS[metrica].color, borderRadius: 4, maxBarThickness: 28 },
+            ] }} aria-label="Gráfico de barras con la tendencia de ventas" role="img" />
         </div></div></div>
         <div className="col-12 col-lg-6"><div className="card shadow-sm"><div className="card-body">
           <h6 className="fw-bold">Clientes con compra y usuarios nuevos</h6>

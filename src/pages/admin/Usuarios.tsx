@@ -78,6 +78,7 @@ export default function AdminUsuarios() {
         <select className="form-select w-auto" aria-label="Filtrar por rol" value={filtroRol} onChange={e => setFiltroRol(e.target.value)}>
           <option value="">Todos los roles</option>
           <option value="ADMIN">Administrador</option>
+          <option value="DESPACHADOR">Despachador</option>
           <option value="USER">Cliente</option>
         </select>
         <button type="button" className="btn btn-outline-secondary" onClick={() => { setBusqueda(''); setFiltroRol('') }}>
@@ -103,6 +104,7 @@ export default function AdminUsuarios() {
                             disabled={esYo} title={esYo ? 'No puedes cambiar tu propio rol' : undefined}
                             onChange={e => void cambiarRol(u, e.target.value as Rol)}>
                       <option value="USER">Cliente</option>
+                      <option value="DESPACHADOR">Despachador</option>
                       <option value="ADMIN">Administrador</option>
                     </select>
                   </td>

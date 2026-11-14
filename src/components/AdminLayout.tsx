@@ -8,6 +8,7 @@ const ENLACES = [
   { to: '/admin/ventas', icono: 'bi-receipt', texto: 'Ventas' },
   { to: '/admin/dashboard', icono: 'bi-bar-chart-line', texto: 'Dashboard' },
   { to: '/admin/usuarios', icono: 'bi-people', texto: 'Usuarios' },
+  { to: '/despacho/pedidos', icono: 'bi-truck', texto: 'Despacho' },
 ]
 
 export default function AdminLayout() {
@@ -24,7 +25,7 @@ export default function AdminLayout() {
           <div className="admin-enlaces">
             {ENLACES.map(e => (
               <NavLink key={e.to} to={e.to} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                <i className={`bi ${e.icono}`} /> {e.texto}
+                {e.icono && <i className={`bi ${e.icono}`} />} {e.texto}
               </NavLink>
             ))}
           </div>

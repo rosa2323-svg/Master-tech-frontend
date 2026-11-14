@@ -175,6 +175,11 @@ export const api = {
     return get<ConcentracionIngresos>(`/api/v1/dashboard/concentracion-ingresos?${q}`)
   },
 
+  // Despacho (DESPACHADOR y ADMIN)
+  pedidosDespacho: () => get<Venta[]>('/api/v1/despacho/pedidos'),
+  cambiarEstadoPedido: (id: number, estado: string) =>
+      send<Venta>('PATCH', `/api/v1/despacho/pedidos/${id}/estado`, { estado }),
+
   // Cliente autenticado
   miPerfil: () => get<Perfil>('/api/v1/me'),
   actualizarPerfil: (d: { nombre: string; direccion: string; numeroTelefono: string }) =>

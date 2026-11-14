@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Tooltip,
+  BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Tooltip,
 } from 'chart.js'
-import { Bar, Line } from 'react-chartjs-2'
+import { Bar } from 'react-chartjs-2'
 import { api } from '../../api/client'
 import type { AgrupacionTendencia, IngresoDiario, ProductosVendidos, PuntoTendencia, Usuario, Venta } from '../../api/types'
 import { formatoSoles } from '../../utils/format'
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Tooltip, Legend)
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 
 const DIAS = [30, 60, 90] as const
 
@@ -110,7 +110,14 @@ export default function AdminDashboard() {
     }
   }, [ventas, usuarios, dias])
 
-  const opciones = { responsive: true, plugins: { legend: { display: true } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+  const opcionesBarrasClientes = {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 12, maxRotation: 0 } },
+      y: { beginAtZero: true, ticks: { precision: 0 } },
+    },
+  }
 
   const maxCategoria = Math.max(1, ...(vendidos?.porCategoria.map(c => c.unidades) ?? []))
   const sube = (ingresoDia?.variacionPct ?? 0) >= 0
@@ -232,11 +239,18 @@ export default function AdminDashboard() {
               ] }} aria-label="Gráfico de barras con la tendencia de ventas" role="img" />
           </div></div></div>
           <div className="col-12 col-lg-6"><div className="card shadow-sm"><div className="card-body">
-            <h6 className="fw-bold">Clientes con compra y usuarios nuevos</h6>
-            <Line options={opciones} data={{ labels: datos.etiquetas, datasets: [
-                { label: 'Clientes con compra', data: datos.compradores, borderColor: '#06d6a0', backgroundColor: '#06d6a0', tension: 0.3 },
-                { label: 'Usuarios nuevos', data: datos.nuevos, borderColor: '#ffd166', backgroundColor: '#ffd166', tension: 0.3 },
-              ] }} aria-label="Gráfico de líneas con clientes con compra y usuarios nuevos por día" role="img" />
+            <h6 className="fw-bold mb-0">Frecuencia de compra</h6>
+            <p className="text-muted small mb-2">Clientes con al menos una compra por día</p>
+            <Bar options={opcionesBarrasClientes} data={{ labels: datos.etiquetas, datasets: [
+                { label: 'Clientes con compra', data: datos.compradores, backgroundColor: '#06d6a0', borderRadius: 4, maxBarThickness: 28 },
+              ] }} aria-label="Gráfico de barras con los clientes con compra por día" role="img" />
+          </div></div></div>
+          <div className="col-12 col-lg-6"><div className="card shadow-sm"><div className="card-body">
+            <h6 className="fw-bold mb-0">Usuarios nuevos</h6>
+            <p className="text-muted small mb-2">Registros por día</p>
+            <Bar options={opcionesBarrasClientes} data={{ labels: datos.etiquetas, datasets: [
+                { label: 'Usuarios nuevos', data: datos.nuevos, backgroundColor: '#ffd166', borderRadius: 4, maxBarThickness: 28 },
+              ] }} aria-label="Gráfico de barras con los usuarios nuevos por día" role="img" />
           </div></div></div>
         </div>
       </>

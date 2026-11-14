@@ -26,7 +26,7 @@ export interface Categoria {
   imagenUrl?: string | null
 }
 
-export type Rol = 'USER' | 'ADMIN'
+export type Rol = 'USER' | 'ADMIN' | 'DESPACHADOR'
 
 export interface Sesion {
   token: string
@@ -56,6 +56,8 @@ export interface Venta {
   usuarioId?: number
   usuarioNombre?: string
   usuarioEmail?: string
+  usuarioDireccion?: string | null
+  usuarioTelefono?: string | null
   detalles: DetalleVenta[]
 }
 

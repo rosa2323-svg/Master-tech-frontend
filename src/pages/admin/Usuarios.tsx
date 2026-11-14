@@ -5,7 +5,7 @@ import type { Rol, Usuario } from '../../api/types'
 import { useAuth } from '../../context/AuthContext'
 import { formatoFecha, normalizar } from '../../utils/format'
 
-const ETIQUETA_ROL: Record<Rol, string> = { USER: 'Cliente', ADMIN: 'Administrador' }
+const ETIQUETA_ROL: Record<Rol, string> = { USER: 'Cliente', ADMIN: 'Administrador', DESPACHADOR: 'Despachador' }
 
 export default function AdminUsuarios() {
   const { sesion } = useAuth()

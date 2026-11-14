@@ -149,6 +149,11 @@ export const api = {
   eliminarUsuario: (id: number) => send<void>('DELETE', `/api/v1/usuarios/${id}`),
   ventas: () => get<Venta[]>('/api/v1/ventas'),
 
+  // Despacho (DESPACHADOR y ADMIN)
+  pedidosDespacho: () => get<Venta[]>('/api/v1/despacho/pedidos'),
+  cambiarEstadoPedido: (id: number, estado: string) =>
+      send<Venta>('PATCH', `/api/v1/despacho/pedidos/${id}/estado`, { estado }),
+
   // Cliente autenticado
   miPerfil: () => get<Perfil>('/api/v1/me'),
   actualizarPerfil: (d: { nombre: string; direccion: string; numeroTelefono: string }) =>

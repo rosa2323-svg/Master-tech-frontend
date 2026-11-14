@@ -1,5 +1,5 @@
 import type {
-  AgrupacionTendencia, PuntoTendencia, IngresoDiario, ProductosVendidos, BotHistorial, BotRespuesta, Categoria, Perfil, Producto, ProductoInput, RegistroData, Rol, Sesion, Usuario, Venta,
+  AgrupacionTendencia, PuntoTendencia, ConcentracionIngresos, IngresoPromedio, IngresoDiario, ProductosVendidos, BotHistorial, BotRespuesta, Categoria, Perfil, Producto, ProductoInput, RegistroData, Rol, Sesion, Usuario, Venta,
 } from './types'
 
 // Cada variable admite UNA o VARIAS URLs separadas por coma, en orden de preferencia:
@@ -160,6 +160,19 @@ export const api = {
     if (desde) q.set('desde', desde)
     if (hasta) q.set('hasta', hasta)
     return get<PuntoTendencia[]>(`/api/v1/dashboard/tendencias?${q}`)
+  },
+
+  ingresoPromedio: (desde?: string, hasta?: string) => {
+    const q = new URLSearchParams()
+    if (desde) q.set('desde', desde)
+    if (hasta) q.set('hasta', hasta)
+    return get<IngresoPromedio>(`/api/v1/dashboard/ingreso-promedio?${q}`)
+  },
+  concentracionIngresos: (desde?: string, hasta?: string) => {
+    const q = new URLSearchParams()
+    if (desde) q.set('desde', desde)
+    if (hasta) q.set('hasta', hasta)
+    return get<ConcentracionIngresos>(`/api/v1/dashboard/concentracion-ingresos?${q}`)
   },
 
   // Cliente autenticado

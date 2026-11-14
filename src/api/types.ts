@@ -110,6 +110,29 @@ export interface IngresoDiario {
   variacionPct: number | null
 }
 
+export interface IngresoPromedio {
+  totalIngreso: number
+  ordenes: number
+  dias: number
+  promedioDiario: number
+  ticketPromedio: number
+}
+
+export interface ItemConcentracion {
+  id: number
+  nombre: string
+  ingreso: number
+  porcentaje: number
+}
+
+export interface ConcentracionIngresos {
+  totalIngreso: number
+  top5Pct: number
+  productos: ItemConcentracion[]
+  otrosIngreso: number
+  otrosPct: number
+}
+
 // ---- Asistente (bot-core): http://localhost:8090 ----
 /** Acción de interfaz que acompaña a una respuesta. Hoy: { type: 'products', ids } = tarjetas de producto. */
 export interface BotAccion {

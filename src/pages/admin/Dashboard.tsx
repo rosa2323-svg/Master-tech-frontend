@@ -4,7 +4,7 @@ import {
 } from 'chart.js'
 import { Bar } from 'react-chartjs-2'
 import { api } from '../../api/client'
-import type { AgrupacionTendencia, IngresoDiario, ProductosVendidos, PuntoTendencia, Usuario, Venta } from '../../api/types'
+import type { AgrupacionTendencia, ConcentracionIngresos, IngresoDiario, IngresoPromedio, ProductosVendidos, PuntoTendencia, Usuario, Venta } from '../../api/types'
 import { formatoSoles } from '../../utils/format'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
@@ -24,6 +24,8 @@ const AGRUPACIONES: { valor: AgrupacionTendencia; texto: string }[] = [
   { valor: 'mes', texto: 'Por mes' },
 ]
 
+const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+
 const clave = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
 export default function AdminDashboard() {
@@ -37,6 +39,8 @@ export default function AdminDashboard() {
   const [tendencia, setTendencia] = useState<PuntoTendencia[]>([])
   const [ingresoDia, setIngresoDia] = useState<IngresoDiario | null>(null)
   const [vendidos, setVendidos] = useState<ProductosVendidos | null>(null)
+  const [promedio, setPromedio] = useState<IngresoPromedio | null>(null)
+  const [concentracion, setConcentracion] = useState<ConcentracionIngresos | null>(null)
 
   useEffect(() => { document.title = 'MASTER TECH | Dashboard' }, [])
   useEffect(() => {
@@ -72,6 +76,16 @@ export default function AdminDashboard() {
     return () => { vigente = false }
   }, [dias])
 
+  useEffect(() => {
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
+    const desde = new Date(hoy); desde.setDate(hoy.getDate() - (dias - 1))
+    let vigente = true
+    Promise.all([api.ingresoPromedio(clave(desde), clave(hoy)), api.concentracionIngresos(clave(desde), clave(hoy))])
+        .then(([p, c]) => { if (vigente) { setPromedio(p); setConcentracion(c) } })
+        .catch(e => { if (vigente) setError(e instanceof Error ? e.message : 'No se pudieron cargar los indicadores de ingreso.') })
+    return () => { vigente = false }
+  }, [dias])
+
   const datos = useMemo(() => {
     const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
     const dias_: string[] = []
@@ -98,10 +112,17 @@ export default function AdminDashboard() {
 
     const top = [...porProducto.entries()].sort((a, b) => b[1] - a[1])[0]
     const compradoresDia = dias_.map(k => compradores[k]?.size ?? 0)
+    const compradoresSemana = [0, 0, 0, 0, 0, 0, 0]
+    dias_.forEach((k, i) => {
+      const [y, m, d] = k.split('-').map(Number)
+      const diaSemana = (new Date(y, m - 1, d).getDay() + 6) % 7
+      compradoresSemana[diaSemana] += compradoresDia[i]
+    })
     return {
       etiquetas: dias_.map(k => k.slice(5).split('-').reverse().join('/')),
       unidades: dias_.map(k => unidades[k] ?? 0),
       compradores: compradoresDia,
+      compradoresSemana,
       nuevos: dias_.map(k => nuevos[k] ?? 0),
       top,
       promedioCompradores: compradoresDia.reduce((a, b) => a + b, 0) / dias_.length,
@@ -112,6 +133,7 @@ export default function AdminDashboard() {
 
   const opcionesBarrasClientes = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: { legend: { display: false } },
     scales: {
       x: { grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 12, maxRotation: 0 } },
@@ -124,6 +146,7 @@ export default function AdminDashboard() {
 
   const opcionesBarras = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -176,7 +199,7 @@ export default function AdminDashboard() {
         </div>
 
         <div className="row g-3 mb-4">
-          <div className="col-12 col-lg-4"><div className="card shadow-sm h-100"><div className="card-body">
+          <div className="col-12 col-md-6"><div className="card shadow-sm h-100"><div className="card-body">
             <p className="text-muted small mb-1">Ingreso diario (hoy)</p>
             <h3 className="fw-bold mb-1">{ingresoDia ? formatoSoles(ingresoDia.hoy) : '-'}</h3>
             {ingresoDia && (
@@ -187,7 +210,19 @@ export default function AdminDashboard() {
                     </small>
             )}
           </div></div></div>
-          <div className="col-12 col-lg-8"><div className="card shadow-sm h-100"><div className="card-body">
+          <div className="col-12 col-md-6"><div className="card shadow-sm h-100"><div className="card-body">
+            <p className="text-muted small mb-1">Ingreso promedio (periodo)</p>
+            <h3 className="fw-bold mb-1">
+              {promedio ? formatoSoles(promedio.promedioDiario) : '-'} <small className="fs-6 text-muted">/ día</small>
+            </h3>
+            <small className="text-muted">
+              {promedio ? `Ticket promedio: ${formatoSoles(promedio.ticketPromedio)} por orden (${promedio.ordenes} órdenes)` : ''}
+            </small>
+          </div></div></div>
+        </div>
+
+        <div className="row g-3 mb-4">
+          <div className="col-12"><div className="card shadow-sm"><div className="card-body">
             <div className="d-flex justify-content-between align-items-baseline mb-2">
               <h6 className="fw-bold mb-0">Productos vendidos</h6>
               <span className="text-muted small">{vendidos ? `${vendidos.totalUnidades} unidades en el periodo` : '-'}</span>
@@ -217,15 +252,44 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div></div></div>
+
+          <div className="col-12"><div className="card shadow-sm"><div className="card-body">
+            <div className="d-flex justify-content-between align-items-baseline flex-wrap gap-2 mb-2">
+              <h6 className="fw-bold mb-0">Concentración de ingresos por producto</h6>
+              <span className="text-muted small">
+              {concentracion ? `Los 5 principales concentran ${concentracion.top5Pct}% de ${formatoSoles(concentracion.totalIngreso)}` : '-'}
+            </span>
+            </div>
+            {concentracion?.productos.length === 0 && <small className="text-muted">Sin ventas en el periodo</small>}
+            {concentracion?.productos.map(p => (
+                <div key={p.id} className="mb-2">
+                  <div className="d-flex justify-content-between small">
+                    <span>{p.nombre}</span><span>{p.porcentaje}% · {formatoSoles(p.ingreso)}</span>
+                  </div>
+                  <div className="progress" style={{ height: 6 }} role="progressbar" aria-label={`${p.nombre}: ${p.porcentaje}% del ingreso`}>
+                    <div className="progress-bar" style={{ width: `${p.porcentaje}%`, backgroundColor: '#06d6a0' }} />
+                  </div>
+                </div>
+            ))}
+            {concentracion && concentracion.otrosPct > 0 && (
+                <div className="mb-0">
+                  <div className="d-flex justify-content-between small text-muted">
+                    <span>Otros productos</span><span>{concentracion.otrosPct}% · {formatoSoles(concentracion.otrosIngreso)}</span>
+                  </div>
+                  <div className="progress" style={{ height: 6 }} role="progressbar" aria-label={`Otros productos: ${concentracion.otrosPct}% del ingreso`}>
+                    <div className="progress-bar bg-secondary" style={{ width: `${concentracion.otrosPct}%` }} />
+                  </div>
+                </div>
+            )}
+          </div></div></div>
         </div>
 
         <div className="row g-4">
-          <div className="col-12 col-lg-6"><div className="card shadow-sm"><div className="card-body">
-            <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+          <div className="col-12"><div className="card shadow-sm"><div className="card-body">
+            <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
               <h6 className="fw-bold mb-0">Tendencia de ventas</h6>
               <div className="d-flex gap-2">
-                <select className="form-select form-select-sm" aria-label="Métrica" value={metrica}
-                        onChange={e => setMetrica(e.target.value as Metrica)}>
+                <select className="form-select form-select-sm w-auto" aria-label="Métrica" value={metrica}                        onChange={e => setMetrica(e.target.value as Metrica)}>
                   {(Object.keys(METRICAS) as Metrica[]).map(m => <option key={m} value={m}>{METRICAS[m].texto}</option>)}
                 </select>
                 <select className="form-select form-select-sm" aria-label="Agrupar por" value={agrupar}
@@ -234,23 +298,29 @@ export default function AdminDashboard() {
                 </select>
               </div>
             </div>
-            <Bar options={opcionesBarras} data={{ labels: tendencia.map(p => p.etiqueta), datasets: [
-                { label: METRICAS[metrica].texto, data: tendencia.map(p => p[metrica]), backgroundColor: METRICAS[metrica].color, borderRadius: 4, maxBarThickness: 28 },
-              ] }} aria-label="Gráfico de barras con la tendencia de ventas" role="img" />
+            <div style={{ position: 'relative', width: '100%', height: 320 }}>
+              <Bar options={opcionesBarras} data={{ labels: tendencia.map(p => p.etiqueta), datasets: [
+                  { label: METRICAS[metrica].texto, data: tendencia.map(p => p[metrica]), backgroundColor: METRICAS[metrica].color, borderRadius: 4, maxBarThickness: 28 },
+                ] }} aria-label="Gráfico de barras con la tendencia de ventas" role="img" />
+            </div>
           </div></div></div>
           <div className="col-12 col-lg-6"><div className="card shadow-sm"><div className="card-body">
             <h6 className="fw-bold mb-0">Frecuencia de compra</h6>
-            <p className="text-muted small mb-2">Clientes con al menos una compra por día</p>
-            <Bar options={opcionesBarrasClientes} data={{ labels: datos.etiquetas, datasets: [
-                { label: 'Clientes con compra', data: datos.compradores, backgroundColor: '#06d6a0', borderRadius: 4, maxBarThickness: 28 },
-              ] }} aria-label="Gráfico de barras con los clientes con compra por día" role="img" />
+            <p className="text-muted small mb-4">Clientes con compra según el día de la semana (total del periodo)</p>
+            <div style={{ position: 'relative', width: '100%', height: 260 }}>
+              <Bar options={opcionesBarrasClientes} data={{ labels: DIAS_SEMANA, datasets: [
+                  { label: 'Clientes con compra', data: datos.compradoresSemana, backgroundColor: '#06d6a0', borderRadius: 4, maxBarThickness: 40 },
+                ] }} aria-label="Gráfico de barras con los clientes con compra por día de la semana" role="img" />
+            </div>
           </div></div></div>
           <div className="col-12 col-lg-6"><div className="card shadow-sm"><div className="card-body">
             <h6 className="fw-bold mb-0">Usuarios nuevos</h6>
-            <p className="text-muted small mb-2">Registros por día</p>
-            <Bar options={opcionesBarrasClientes} data={{ labels: datos.etiquetas, datasets: [
-                { label: 'Usuarios nuevos', data: datos.nuevos, backgroundColor: '#ffd166', borderRadius: 4, maxBarThickness: 28 },
-              ] }} aria-label="Gráfico de barras con los usuarios nuevos por día" role="img" />
+            <p className="text-muted small mb-4">Registros por día</p>
+            <div style={{ position: 'relative', width: '100%', height: 260 }}>
+              <Bar options={opcionesBarrasClientes} data={{ labels: datos.etiquetas, datasets: [
+                  { label: 'Usuarios nuevos', data: datos.nuevos, backgroundColor: '#ffd166', borderRadius: 4, maxBarThickness: 28 },
+                ] }} aria-label="Gráfico de barras con los usuarios nuevos por día" role="img" />
+            </div>
           </div></div></div>
         </div>
       </>

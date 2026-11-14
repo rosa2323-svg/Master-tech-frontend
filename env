@@ -1,0 +1,11 @@
+# Valores de PRODUCCIÓN: Vite los usa solo en `npm run build` (no contienen secretos, es seguro versionarlos).
+# Si despliegas en Render, también puedes definir estas variables en el panel (tienen prioridad sobre este archivo).
+
+# Backend Spring Boot (Render)
+VITE_BOT_URL=http://localhost:8090,https://bot-asitente.onrender.com/mastertech
+
+# Asistente con IA (bot-core: FastAPI + Gemini, Render)
+VITE_API_URL=http://localhost:8089,https://temporal-l5hx.onrender.com
+
+
+

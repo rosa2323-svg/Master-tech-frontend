@@ -106,7 +106,7 @@ export default function Navbar() {
                     <Dropdown.Item as={Link} to="/admin/productos"><i className="bi bi-speedometer2 me-2" />Panel admin</Dropdown.Item>
                   )}
                   {esDespachador && (
-                      <Dropdown.Item as={Link} to="/despacho/pedidos">Despacho de pedidos</Dropdown.Item>
+                      <Dropdown.Item as={Link} to="/despacho/pedidos"><i className="bi bi-truck me-2" />Despacho de pedidos</Dropdown.Item>
                   )}
                   <Dropdown.Divider />
                   <Dropdown.Item onClick={() => { logout(); navigate('/') }}>

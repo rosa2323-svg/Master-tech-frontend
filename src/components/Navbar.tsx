@@ -11,6 +11,7 @@ export default function Navbar() {
   const { categorias, productos } = useCatalog()
   const { cuenta } = useCart()
   const { sesion, esAdmin, abrirLogin, logout } = useAuth()
+  const esDespachador = sesion?.rol === 'DESPACHADOR'
   const navigate = useNavigate()
   const location = useLocation()
   const [params] = useSearchParams()
@@ -103,6 +104,9 @@ export default function Navbar() {
                   <Dropdown.Item as={Link} to="/perfil"><i className="bi bi-person me-2" />Mi perfil</Dropdown.Item>
                   {esAdmin && (
                     <Dropdown.Item as={Link} to="/admin/productos"><i className="bi bi-speedometer2 me-2" />Panel admin</Dropdown.Item>
+                  )}
+                  {esDespachador && (
+                      <Dropdown.Item as={Link} to="/despacho/pedidos"><i className="bi bi-truck me-2" />Despacho de pedidos</Dropdown.Item>
                   )}
                   <Dropdown.Divider />
                   <Dropdown.Item onClick={() => { logout(); navigate('/') }}>

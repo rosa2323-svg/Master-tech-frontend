@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AdminLayout from './components/AdminLayout'
+import DespachoLayout from './components/DespachoLayout'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 import Cart from './pages/Cart'
@@ -15,6 +16,7 @@ import Search from './pages/Search'
 import Terminos from './pages/Terminos'
 import AdminCategorias from './pages/admin/Categorias'
 import AdminDashboard from './pages/admin/Dashboard'
+import AdminDespacho from './pages/admin/Despacho'
 import AdminProductos from './pages/admin/Productos'
 import AdminUsuarios from './pages/admin/Usuarios'
 import AdminVentas from './pages/admin/Ventas'
@@ -46,6 +48,13 @@ export default function App() {
           <Route path="ventas" element={<AdminVentas />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="usuarios" element={<AdminUsuarios />} />
+        </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute roles={['DESPACHADOR', 'ADMIN']} />}>
+        <Route path="despacho" element={<DespachoLayout />}>
+          <Route index element={<Navigate to="pedidos" replace />} />
+          <Route path="pedidos" element={<AdminDespacho />} />
         </Route>
       </Route>
 

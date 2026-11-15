@@ -28,6 +28,7 @@ export default function LoginModal() {
       setPassword('')
       cerrar()
       if (s.rol === 'ADMIN') navigate('/admin/productos')
+      else if (s.rol === 'DESPACHADOR') navigate('/despacho/pedidos')
     } catch (err) {
       mostrarAlerta(err instanceof Error ? err.message : 'No se pudo iniciar sesión.')
     } finally {

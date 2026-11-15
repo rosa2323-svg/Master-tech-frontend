@@ -26,7 +26,7 @@ export interface Categoria {
   imagenUrl?: string | null
 }
 
-export type Rol = 'USER' | 'ADMIN'
+export type Rol = 'USER' | 'ADMIN' | 'DESPACHADOR'
 
 export interface Sesion {
   token: string
@@ -56,6 +56,8 @@ export interface Venta {
   usuarioId?: number
   usuarioNombre?: string
   usuarioEmail?: string
+  usuarioDireccion?: string | null
+  usuarioTelefono?: string | null
   detalles: DetalleVenta[]
 }
 
@@ -79,6 +81,58 @@ export interface RegistroData {
   dni: string
   direccion: string
   numeroTelefono: string
+}
+
+export type AgrupacionTendencia = 'dia' | 'semana' | 'mes'
+
+export interface PuntoTendencia {
+  periodo: string
+  etiqueta: string
+  ordenes: number
+  unidades: number
+  ingreso: number
+}
+
+export interface ItemVendido {
+  id: number
+  nombre: string
+  unidades: number
+  ingreso: number
+}
+
+export interface ProductosVendidos {
+  totalUnidades: number
+  porCategoria: ItemVendido[]
+  topProductos: ItemVendido[]
+}
+
+export interface IngresoDiario {
+  hoy: number
+  ayer: number
+  variacionPct: number | null
+}
+
+export interface IngresoPromedio {
+  totalIngreso: number
+  ordenes: number
+  dias: number
+  promedioDiario: number
+  ticketPromedio: number
+}
+
+export interface ItemConcentracion {
+  id: number
+  nombre: string
+  ingreso: number
+  porcentaje: number
+}
+
+export interface ConcentracionIngresos {
+  totalIngreso: number
+  top5Pct: number
+  productos: ItemConcentracion[]
+  otrosIngreso: number
+  otrosPct: number
 }
 
 // ---- Asistente (bot-core): http://localhost:8090 ----

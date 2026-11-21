@@ -271,6 +271,10 @@ body.modo-admin .etiqueta-categoria, body.modo-admin .btn-borrar { background: v
 body.modo-admin .conteo-con, body.modo-admin .btn-editar { background: var(--color-aviso-suave); color: var(--color-aviso); border-color: var(--color-aviso-borde); }
 body.modo-admin .conteo-vacia { background: var(--color-exito-suave); color: var(--color-exito); border-color: var(--color-exito-borde); }
 
+body.modo-admin .btn-habilitar { background: var(--color-exito-suave); color: var(--color-exito); border-color: var(--color-exito-borde); }
+body.modo-admin .btn-habilitar:hover { background: rgba(6, 214, 160, 0.22); }
+body.modo-admin .tabla-admin .fila-inactiva td { opacity: 0.55; }
+body.modo-admin .tabla-admin .fila-inactiva td.celda-acciones { opacity: 1; }
 body.modo-admin .btn-borrar:hover { background: rgba(230, 57, 70, 0.22); color: var(--color-acento-claro); }
 body.modo-admin .btn-editar:hover { background: rgba(255, 209, 102, 0.2); color: var(--color-aviso); }
 body.modo-admin .btn-bloqueado { background: rgba(255, 255, 255, 0.03); color: var(--color-tenue); border-color: var(--color-borde); cursor: not-allowed; opacity: 0.5; }

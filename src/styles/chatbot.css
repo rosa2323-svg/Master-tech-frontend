@@ -430,3 +430,6 @@
         transform: none;
     }
 }
+/* Aviso para visitantes sin sesión */
+.chatbot-aviso-invitado { margin: 0; padding: 0.4rem 0.9rem; font-size: 0.74rem; line-height: 1.3; color: #8a8f98; }
+.chatbot-aviso-invitado button { background: none; border: 0; padding: 0; color: inherit; font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }

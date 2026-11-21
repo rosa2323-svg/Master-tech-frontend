@@ -8,6 +8,7 @@ export interface Producto {
   stock: number
   categoriaId: number
   categoriaNombre?: string | null
+  activo?: boolean
 }
 
 export interface ProductoInput {

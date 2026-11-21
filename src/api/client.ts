@@ -117,14 +117,15 @@ export const api = {
   me: () => get<Omit<Sesion, 'token'>>('/api/auth/me'),
 
   // Catálogo (público)
-  productos: () => get<Producto[]>('/api/v1/productos'),
+  /** Catálogo público (solo habilitados). Con `todos` y sesión de ADMIN incluye los inhabilitados. */
+  productos: (todos = false) => get<Producto[]>(`/api/v1/productos${todos ? '?todos=true' : ''}`),
   producto: (id: number | string) => get<Producto>(`/api/v1/productos/${id}`),
   categorias: () => get<Categoria[]>('/api/v1/categorias'),
 
   // Admin: productos
   crearProducto: (d: ProductoInput) => send<Producto>('POST', '/api/v1/productos', d),
   actualizarProducto: (id: number, d: ProductoInput) => send<Producto>('PUT', `/api/v1/productos/${id}`, d),
-  eliminarProducto: (id: number) => send<void>('DELETE', `/api/v1/productos/${id}`),
+  cambiarActivoProducto: (id: number, activo: boolean) => send<Producto>('PATCH', `/api/v1/productos/${id}/activo`, { activo }),
   subirImagenProducto: (id: number, archivo: File) => {
     const form = new FormData()
     form.append('imagen', archivo)

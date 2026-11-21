@@ -92,7 +92,7 @@ export default function AdminCategorias() {
 
       <div className="tabla-envoltorio">
         <table className="tabla-admin">
-          <thead><tr><th>#</th><th>Imagen</th><th>Nombre</th><th>Descripción</th><th>Productos</th><th>Acciones</th></tr></thead>
+          <thead><tr><th>Código</th><th>Imagen</th><th>Nombre</th><th>Descripción</th><th>Productos</th><th>Acciones</th></tr></thead>
           <tbody>
             {categorias.length === 0 ? (
               <tr><td colSpan={6}><div className="vacio"><i className="bi bi-tags" />{cargando ? 'Cargando…' : 'Aún no hay categorías. Crea la primera con "Nueva categoría".'}</div></td></tr>
@@ -100,7 +100,7 @@ export default function AdminCategorias() {
               const n = cuenta(c.id)
               return (
                 <tr key={c.id}>
-                  <td className="texto-tenue">{c.id}</td>
+                  <td className="texto-tenue text-nowrap">{c.codigo ?? `#${c.id}`}</td>
                   <td>{c.imagenUrl
                     ? <img src={c.imagenUrl} alt={c.nombre} style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8 }} />
                     : <span className="texto-tenue">—</span>}</td>
@@ -127,6 +127,13 @@ export default function AdminCategorias() {
           <Modal.Header closeButton><Modal.Title>{editando === 'nueva' ? 'Nueva categoría' : 'Editar categoría'}</Modal.Title></Modal.Header>
           <Modal.Body>
             {error && <div className="alert alert-danger py-2">{error}</div>}
+            {editando !== null && editando !== 'nueva' && editando.codigo && (
+              <div className="mb-3">
+                <label className="form-label" htmlFor="cCodigo">Código</label>
+                <input id="cCodigo" className="form-control" value={editando.codigo} readOnly disabled />
+                <div className="form-text">Lo asigna el sistema y no se puede cambiar.</div>
+              </div>
+            )}
             <div className="mb-3">
               <label className="form-label" htmlFor="cNombre">Nombre</label>
               <input id="cNombre" className="form-control" placeholder="Ej. Laptops" maxLength={100} value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} />

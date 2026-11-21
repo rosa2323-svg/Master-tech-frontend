@@ -26,7 +26,7 @@ export default function Navbar() {
     const t = normalizar(texto)
     if (t.length < 2) return []
     const nombres = productos
-      .filter(p => normalizar(p.nombre).includes(t) || normalizar(p.marca ?? '').includes(t))
+      .filter(p => normalizar(p.nombre).includes(t) || normalizar(p.marca ?? '').includes(t) || normalizar(p.codigo ?? '').includes(t))
       .map(p => ({ tipo: 'producto' as const, id: p.id, etiqueta: p.nombre }))
       .slice(0, 5)
     const cats = categorias

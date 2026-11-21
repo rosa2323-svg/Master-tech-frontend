@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Modal } from 'react-bootstrap'
 import { api } from '../../api/client'
 import type { Producto } from '../../api/types'
@@ -6,7 +6,8 @@ import SortableTh, { alternarOrden, ordenar, type Orden } from '../../components
 import { useCatalog } from '../../context/CatalogContext'
 import { formatoSoles, normalizar, STOCK_BAJO } from '../../utils/format'
 
-type Col = 'id' | 'nombre' | 'marca' | 'categoria' | 'precio' | 'stock'
+type Col = 'codigo' | 'nombre' | 'marca' | 'categoria' | 'precio' | 'stock'
+type FiltroEstado = 'activos' | 'inhabilitados' | 'todos'
 const VACIO = { nombre: '', marca: '', categoriaId: '', precio: '', stock: '', descripcion: '' }
 
 function InsigniaStock({ stock }: { stock: number }) {
@@ -16,7 +17,11 @@ function InsigniaStock({ stock }: { stock: number }) {
 }
 
 export default function AdminProductos() {
-  const { productos, categorias, recargar, cargando } = useCatalog()
+  const { categorias, recargar: recargarTienda } = useCatalog()
+  // El panel ve también los inhabilitados; el catálogo público (CatalogContext) solo recibe los habilitados.
+  const [productos, setProductos] = useState<Producto[]>([])
+  const [cargando, setCargando] = useState(true)
+  const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>('activos')
   const [busqueda, setBusqueda] = useState('')
   const [soloBajo, setSoloBajo] = useState(false)
   const [orden, setOrden] = useState<Orden<Col> | null>(null)
@@ -27,20 +32,33 @@ export default function AdminProductos() {
   const [imagen, setImagen] = useState<File | null>(null)
   const [guardando, setGuardando] = useState(false)
   const [errorForm, setErrorForm] = useState<string | null>(null)
-  const [porEliminar, setPorEliminar] = useState<Producto | null>(null)
+  const [porInhabilitar, setPorInhabilitar] = useState<Producto | null>(null)
 
   useEffect(() => { document.title = 'MASTER TECH | Admin de productos' }, [])
+
+  const recargar = useCallback(async () => {
+    try {
+      setProductos(await api.productos(true))
+    } catch (err) {
+      setAviso({ ok: false, texto: err instanceof Error ? err.message : 'No se pudieron cargar los productos.' })
+    } finally {
+      setCargando(false)
+    }
+  }, [])
+
+  useEffect(() => { void recargar() }, [recargar])
 
   const nombreCategoria = (id: number) => categorias.find(c => c.id === id)?.nombre ?? '—'
 
   const visibles = useMemo(() => {
     const t = normalizar(busqueda)
     const filtrados = productos.filter(p =>
-      (!t || normalizar(p.nombre).includes(t) || normalizar(p.marca ?? '').includes(t)) &&
+      (filtroEstado === 'todos' || (filtroEstado === 'activos') === (p.activo !== false)) &&
+      (!t || normalizar(p.nombre).includes(t) || normalizar(p.marca ?? '').includes(t) || normalizar(p.codigo ?? '').includes(t)) &&
       (!soloBajo || p.stock <= STOCK_BAJO))
     return ordenar(filtrados, p => {
       switch (orden?.col) {
-        case 'id': return p.id
+        case 'codigo': return p.codigo ?? ''
         case 'nombre': return p.nombre
         case 'marca': return p.marca ?? ''
         case 'categoria': return nombreCategoria(p.categoriaId)
@@ -50,9 +68,10 @@ export default function AdminProductos() {
       }
     }, orden)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [productos, categorias, busqueda, soloBajo, orden])
+  }, [productos, categorias, busqueda, soloBajo, orden, filtroEstado])
 
-  const valorInventario = productos.reduce((a, p) => a + p.precio * p.stock, 0)
+  const habilitados = productos.filter(p => p.activo !== false)
+  const valorInventario = habilitados.reduce((a, p) => a + p.precio * p.stock, 0)
 
   const abrirNuevo = () => { setForm(VACIO); setImagen(null); setErrorForm(null); setEditando('nuevo') }
   const abrirEditar = (p: Producto) => {
@@ -88,6 +107,7 @@ export default function AdminProductos() {
         catch (err) { aviso += ` Pero la imagen no se pudo subir: ${err instanceof Error ? err.message : 'error'}.` }
       }
       await recargar()
+      void recargarTienda()   // mantiene al día el catálogo público (chatbot, buscador)
       setEditando(null)
       setAviso({ ok: true, texto: aviso })
     } catch (err) {
@@ -97,16 +117,16 @@ export default function AdminProductos() {
     }
   }
 
-  const eliminar = async () => {
-    if (!porEliminar) return
+  const cambiarActivo = async (producto: Producto, activo: boolean) => {
     try {
-      await api.eliminarProducto(porEliminar.id)
+      await api.cambiarActivoProducto(producto.id, activo)
       await recargar()
-      setAviso({ ok: true, texto: `Se eliminó "${porEliminar.nombre}".` })
+      void recargarTienda()
+      setAviso({ ok: true, texto: activo ? `Se habilitó "${producto.nombre}".` : `Se inhabilitó "${producto.nombre}". Ya no aparece en la tienda.` })
     } catch (err) {
-      setAviso({ ok: false, texto: err instanceof Error ? err.message : 'No se pudo eliminar el producto.' })
+      setAviso({ ok: false, texto: err instanceof Error ? err.message : 'No se pudo cambiar el estado del producto.' })
     } finally {
-      setPorEliminar(null)
+      setPorInhabilitar(null)
     }
   }
 
@@ -130,18 +150,24 @@ export default function AdminProductos() {
       )}
 
       <section className="tarjetas-metricas" aria-label="Métricas del inventario">
-        <div className="tarjeta-metrica"><div className="metrica-etiqueta">Total de productos</div><div className="metrica-valor principal">{productos.length}</div></div>
-        <div className="tarjeta-metrica"><div className="metrica-etiqueta">Stock bajo ({STOCK_BAJO} o menos)</div><div className="metrica-valor alerta">{productos.filter(p => p.stock <= STOCK_BAJO).length}</div></div>
+        <div className="tarjeta-metrica"><div className="metrica-etiqueta">Productos habilitados</div><div className="metrica-valor principal">{habilitados.length}</div></div>
+        <div className="tarjeta-metrica"><div className="metrica-etiqueta">Stock bajo ({STOCK_BAJO} o menos)</div><div className="metrica-valor alerta">{habilitados.filter(p => p.stock <= STOCK_BAJO).length}</div></div>
         <div className="tarjeta-metrica"><div className="metrica-etiqueta">Valor del inventario</div><div className="metrica-valor">{formatoSoles(valorInventario)}</div></div>
       </section>
 
       <div className="barra-herramientas">
-        <input type="search" className="form-control" placeholder="Buscar por nombre o marca" aria-label="Buscar productos"
+        <input type="search" className="form-control" placeholder="Buscar por nombre, marca o código" aria-label="Buscar productos"
                value={busqueda} onChange={e => setBusqueda(e.target.value)} />
+        <select className="form-select w-auto" aria-label="Filtrar por estado" value={filtroEstado}
+                onChange={e => setFiltroEstado(e.target.value as FiltroEstado)}>
+          <option value="activos">Habilitados</option>
+          <option value="inhabilitados">Inhabilitados</option>
+          <option value="todos">Todos</option>
+        </select>
         <button type="button" className={`btn btn-outline-warning ${soloBajo ? 'active' : ''}`} aria-pressed={soloBajo} onClick={() => setSoloBajo(v => !v)}>
           <i className="bi bi-exclamation-triangle me-1" />Solo stock bajo
         </button>
-        <button type="button" className="btn btn-outline-secondary" onClick={() => { setBusqueda(''); setSoloBajo(false); setOrden(null) }}>
+        <button type="button" className="btn btn-outline-secondary" onClick={() => { setBusqueda(''); setSoloBajo(false); setOrden(null); setFiltroEstado('activos') }}>
           <i className="bi bi-x-lg me-1" />Limpiar
         </button>
       </div>
@@ -149,22 +175,24 @@ export default function AdminProductos() {
       <div className="tabla-envoltorio">
         <table className="tabla-admin">
           <thead>
-            <tr>{th('id', '#')}{th('nombre', 'Nombre')}{th('marca', 'Marca')}{th('categoria', 'Categoría')}{th('precio', 'Precio')}{th('stock', 'Inventario')}<th>Acciones</th></tr>
+            <tr>{th('codigo', 'Código')}{th('nombre', 'Nombre')}{th('marca', 'Marca')}{th('categoria', 'Categoría')}{th('precio', 'Precio')}{th('stock', 'Inventario')}<th>Acciones</th></tr>
           </thead>
           <tbody>
             {visibles.length === 0 ? (
               <tr><td colSpan={7}><div className="vacio"><i className="bi bi-inbox" />{cargando ? 'Cargando…' : 'No hay productos que coincidan.'}</div></td></tr>
             ) : visibles.map(p => (
-              <tr key={p.id} className={p.stock <= 0 ? 'fila-agotada' : ''}>
-                <td className="texto-tenue">{p.id}</td>
-                <td className="fw-semibold">{p.nombre}</td>
+              <tr key={p.id} className={p.activo === false ? 'fila-inactiva' : p.stock <= 0 ? 'fila-agotada' : ''}>
+                <td className="texto-tenue text-nowrap">{p.codigo ?? `#${p.id}`}</td>
+                <td className="fw-semibold">{p.nombre}{p.activo === false && <span className="badge bg-secondary ms-2">Inhabilitado</span>}</td>
                 <td>{p.marca}</td>
                 <td><span className="etiqueta-categoria">{nombreCategoria(p.categoriaId)}</span></td>
                 <td className="precio-admin">{formatoSoles(p.precio)}</td>
                 <td className="text-center"><InsigniaStock stock={p.stock} /></td>
                 <td className="celda-acciones">
                   <button type="button" className="btn-accion btn-editar" onClick={() => abrirEditar(p)}><i className="bi bi-pencil-fill" /> Editar</button>
-                  <button type="button" className="btn-accion btn-borrar" onClick={() => setPorEliminar(p)}><i className="bi bi-trash-fill" /> Eliminar</button>
+                  {p.activo === false
+                    ? <button type="button" className="btn-accion btn-habilitar" onClick={() => void cambiarActivo(p, true)}><i className="bi bi-check-circle-fill" /> Habilitar</button>
+                    : <button type="button" className="btn-accion btn-borrar" onClick={() => setPorInhabilitar(p)}><i className="bi bi-slash-circle-fill" /> Inhabilitar</button>}
                 </td>
               </tr>
             ))}
@@ -177,6 +205,13 @@ export default function AdminProductos() {
           <Modal.Header closeButton><Modal.Title>{editando === 'nuevo' ? 'Nuevo producto' : 'Editar producto'}</Modal.Title></Modal.Header>
           <Modal.Body>
             {errorForm && <div className="alert alert-danger py-2">{errorForm}</div>}
+            {editando !== null && editando !== 'nuevo' && editando.codigo && (
+              <div className="mb-3">
+                <label className="form-label" htmlFor="pCodigo">Código</label>
+                <input id="pCodigo" className="form-control" value={editando.codigo} readOnly disabled />
+                <div className="form-text">Lo asigna el sistema y no se puede cambiar.</div>
+              </div>
+            )}
             <div className="mb-3">
               <label className="form-label" htmlFor="pNombre">Nombre</label>
               <input id="pNombre" className="form-control" placeholder="Ej. Mouse Gamer RGB" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} />
@@ -201,7 +236,7 @@ export default function AdminProductos() {
             <div className="mb-3">
               <label className="form-label" htmlFor="pImagen">Imagen</label>
               <input id="pImagen" type="file" accept="image/*" className="form-control" onChange={e => setImagen(e.target.files?.[0] ?? null)} />
-              <div className="form-text">{editando === 'nuevo' ? 'Opcional (máx. 5 MB).' : 'Déjalo vacío para conservar la imagen actual (máx. 5 MB).'}</div>
+              <div className="form-text">{editando === 'nuevo' ? 'Opcional (máx. 5 MB). El código (p. ej. LAP-0001) se asigna solo al crear, según su categoría.' : 'Déjalo vacío para conservar la imagen actual (máx. 5 MB).'}</div>
             </div>
             <div className="row g-3">
               <div className="col-sm-6">
@@ -223,12 +258,15 @@ export default function AdminProductos() {
         </form>
       </Modal>
 
-      <Modal show={porEliminar !== null} onHide={() => setPorEliminar(null)} centered size="sm">
-        <Modal.Header closeButton><Modal.Title>Eliminar producto</Modal.Title></Modal.Header>
-        <Modal.Body>Vas a eliminar <strong>{porEliminar?.nombre}</strong>. Esta acción no se puede deshacer.</Modal.Body>
+      <Modal show={porInhabilitar !== null} onHide={() => setPorInhabilitar(null)} centered size="sm">
+        <Modal.Header closeButton><Modal.Title>Inhabilitar producto</Modal.Title></Modal.Header>
+        <Modal.Body>
+          <strong>{porInhabilitar?.nombre}</strong> dejará de mostrarse y de venderse en la tienda, pero se conserva su historial de ventas.
+          Podrás volver a habilitarlo cuando quieras.
+        </Modal.Body>
         <Modal.Footer>
-          <button type="button" className="btn btn-outline-secondary" onClick={() => setPorEliminar(null)}>Cancelar</button>
-          <button type="button" className="btn btn-danger" onClick={eliminar}>Eliminar</button>
+          <button type="button" className="btn btn-outline-secondary" onClick={() => setPorInhabilitar(null)}>Cancelar</button>
+          <button type="button" className="btn btn-danger" onClick={() => porInhabilitar && void cambiarActivo(porInhabilitar, false)}>Inhabilitar</button>
         </Modal.Footer>
       </Modal>
     </>

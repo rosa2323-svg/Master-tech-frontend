@@ -8,11 +8,14 @@ import { useCart } from '../context/CartContext'
 import { useCatalog } from '../context/CatalogContext'
 import { formatoSoles, imagenProducto, IMG_DEFECTO, marcaDe } from '../utils/format'
 
-// Asistente con IA (bot-core: FastAPI + Gemini). Requiere sesión: el servidor valida el mismo JWT que Spring,
-// guarda el historial en la BD y recuerda las preferencias de cada cliente. Aquí solo se pintan los mensajes.
+// Asistente con IA (bot-core: FastAPI + Gemini). Funciona con y sin sesión:
+//  - Con sesión: el servidor valida el mismo JWT que Spring, guarda el historial en la BD y recuerda las preferencias.
+//  - Como visitante: solo catálogo y políticas; la memoria del hilo vive en el servidor (RAM, caduca sola) y no se guarda nada.
+// Aquí solo se pintan los mensajes.
 
 const CLAVE_HISTORIAL_ANTIGUO = 'mastertech_chatbot_historial' // versión sin IA: guardaba el chat en el navegador
 const SUGERENCIAS = ['Recomiéndame algo', 'Quiero una laptop gamer', '¿Qué compré antes?', '¿Cómo es la garantía?']
+const SUGERENCIAS_VISITANTE = ['Quiero una laptop gamer', 'Celulares hasta S/ 1500', '¿Cómo es la garantía?', '¿Cómo es el envío?']
 
 interface Mensaje { texto: string; tipo: 'bot' | 'usuario' | 'error'; hora: string; productos?: number[] }
 
@@ -22,7 +25,9 @@ const horaDe = (iso?: string | null) => {
 }
 
 const bienvenida = (nombre?: string): Mensaje => ({
-  texto: `Hola${nombre ? `, ${nombre.trim().split(/\s+/)[0]}` : ''}. Soy el asistente de Master Tech. Puedo ayudarte a elegir productos, revisar stock y recomendarte según lo que has comprado antes. ¿En qué te ayudo?`,
+  texto: nombre
+    ? `Hola, ${nombre.trim().split(/\s+/)[0]}. Soy el asistente de Master Tech. Puedo ayudarte a elegir productos, revisar stock y recomendarte según lo que has comprado antes. ¿En qué te ayudo?`
+    : 'Hola. Soy el asistente de Master Tech. Puedo ayudarte a elegir productos, comparar opciones, revisar stock y resolver dudas sobre envío y garantía. ¿En qué te ayudo?',
   tipo: 'bot', hora: horaDe(),
 })
 
@@ -34,7 +39,7 @@ function mensajeDeError(e: unknown): string {
   if (e instanceof ApiError) {
     if (e.status === 0) return 'No pude comunicarme con el asistente. Inténtalo de nuevo en unos minutos.'
     if (e.status === 401) return 'No pude validar tu sesión con el asistente. Cierra sesión y vuelve a entrar.'
-    if (e.status === 429) return 'Estás escribiendo muy rápido. Espera unos segundos e inténtalo otra vez.'
+    if (e.status === 429) return 'Hay muchas consultas en este momento. Espera unos segundos e inténtalo otra vez.'
     if (e.status === 400) return e.message
   }
   return 'Algo salió mal con el asistente. Inténtalo de nuevo en unos minutos.'
@@ -82,8 +87,9 @@ export default function Chatbot() {
 
   // Al abrir el chat con sesión: trae la última conversación guardada en el servidor.
   useEffect(() => {
-    if (!abierto || !email || historialPedido.current) return
+    if (!abierto || historialPedido.current) return
     historialPedido.current = true
+    if (!email) { setMensajes([bienvenida()]); return }      // visitante: no hay historial guardado
     const gen = generacion.current
     setCargando(true)
     bot.historial()
@@ -110,7 +116,7 @@ export default function Chatbot() {
 
   const enviar = async (textoCrudo: string) => {
     const texto = textoCrudo.trim()
-    if (!texto || escribiendo || cargando || !email) return
+    if (!texto || escribiendo || cargando) return
     const gen = generacion.current
     const abrirNueva = nueva.current
     setMensajes(m => [...m, { texto, tipo: 'usuario', hora: horaDe() }])
@@ -180,33 +186,22 @@ export default function Chatbot() {
             <strong>Asistente Master Tech</strong>
             <span className="chatbot-estado">En línea</span>
           </div>
+          <button type="button" className="chatbot-accion" title="Nueva conversación" aria-label="Nueva conversación"
+                  onClick={reiniciar} disabled={ocupado}>
+            <i className="bi bi-arrow-counterclockwise" />
+          </button>
           {email && (
-            <>
-              <button type="button" className="chatbot-accion" title="Nueva conversación" aria-label="Nueva conversación"
-                      onClick={reiniciar} disabled={ocupado}>
-                <i className="bi bi-arrow-counterclockwise" />
-              </button>
-              <button type="button" className="chatbot-accion" title="Borrar mi historial y lo que recuerdas de mí"
-                      aria-label="Borrar mi historial y lo que recuerda el asistente" onClick={() => void olvidar()} disabled={ocupado}>
-                <i className="bi bi-trash3" />
-              </button>
-            </>
+            <button type="button" className="chatbot-accion" title="Borrar mi historial y lo que recuerdas de mí"
+                    aria-label="Borrar mi historial y lo que recuerda el asistente" onClick={() => void olvidar()} disabled={ocupado}>
+              <i className="bi bi-trash3" />
+            </button>
           )}
           <button type="button" className="chatbot-accion" title="Cerrar" aria-label="Cerrar" onClick={() => setAbierto(false)}>
             <i className="bi bi-x-lg" />
           </button>
         </header>
 
-        {!email ? (
-          <div className="chatbot-mensajes chatbot-invitado">
-            <i className="bi bi-person-lock chatbot-invitado-icono" />
-            <strong>Inicia sesión para chatear</strong>
-            <p>Así puedo recordar tus preferencias, conocer tus compras anteriores y retomar la conversación donde la dejaste.</p>
-            <button type="button" className="chatbot-login" onClick={() => { setAbierto(false); abrirLogin() }}>Iniciar sesión</button>
-            <Link className="chatbot-registro" to="/registro" onClick={() => setAbierto(false)}>Crear una cuenta</Link>
-          </div>
-        ) : (
-          <>
+        <>
             <div className="chatbot-mensajes" ref={zona} aria-live="polite">
               {mensajes.map((m, i) => {
                 const lista = (m.productos ?? []).map(id => productos.find(p => p.id === id)).filter((p): p is Producto => !!p)
@@ -244,10 +239,17 @@ export default function Chatbot() {
             </div>
 
             <div className="chatbot-sugerencias">
-              {soloBienvenida && !ocupado && SUGERENCIAS.map(s => (
+              {soloBienvenida && !ocupado && (email ? SUGERENCIAS : SUGERENCIAS_VISITANTE).map(s => (
                 <button key={s} type="button" className="chatbot-sugerencia" onClick={() => void enviar(s)}>{s}</button>
               ))}
             </div>
+
+            {!email && (
+              <p className="chatbot-aviso-invitado">
+                <i className="bi bi-person-lock" /> Inicia sesión para recomendaciones según tus compras y para que recuerde tus preferencias.{' '}
+                <button type="button" onClick={() => { setAbierto(false); abrirLogin() }}>Iniciar sesión</button>
+              </p>
+            )}
 
             <form className="chatbot-formulario" onSubmit={onSubmit} autoComplete="off">
               <input type="text" className="chatbot-entrada" placeholder="Escribe tu mensaje..." maxLength={500} required
@@ -256,8 +258,7 @@ export default function Chatbot() {
                 <i className="bi bi-send-fill" />
               </button>
             </form>
-          </>
-        )}
+        </>
       </section>
     </>
   )

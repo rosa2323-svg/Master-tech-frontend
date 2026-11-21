@@ -87,6 +87,7 @@ export default function ProductDetail() {
 
         <div className="col-md-7">
           <span className="etiqueta-marca mb-3 d-inline-block">{marcaDe(producto)}</span>
+          {producto.codigo && <span className="text-muted small ms-3">Código: {producto.codigo}</span>}
           <h1 className="fw-bold mb-2 titulo-producto">{producto.nombre}</h1>
           <div className="mb-3">
             <Estrellas valor={CALIFICACION} />

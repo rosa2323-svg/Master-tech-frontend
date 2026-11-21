@@ -18,6 +18,7 @@ export default function Search() {
     return productos.filter(p =>
       normalizar(p.nombre).includes(t) ||
       normalizar(p.marca ?? '').includes(t) ||
+      normalizar(p.codigo ?? '').includes(t) ||
       normalizar(p.descripcion ?? '').includes(t) ||
       normalizar(p.categoriaNombre ?? nombreCat(p.categoriaId)).includes(t))
   }, [termino, productos, categorias])

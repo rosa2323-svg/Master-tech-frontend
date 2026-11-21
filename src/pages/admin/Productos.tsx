@@ -6,7 +6,7 @@ import SortableTh, { alternarOrden, ordenar, type Orden } from '../../components
 import { useCatalog } from '../../context/CatalogContext'
 import { formatoSoles, normalizar, STOCK_BAJO } from '../../utils/format'
 
-type Col = 'id' | 'nombre' | 'marca' | 'categoria' | 'precio' | 'stock'
+type Col = 'codigo' | 'nombre' | 'marca' | 'categoria' | 'precio' | 'stock'
 type FiltroEstado = 'activos' | 'inhabilitados' | 'todos'
 const VACIO = { nombre: '', marca: '', categoriaId: '', precio: '', stock: '', descripcion: '' }
 
@@ -54,11 +54,11 @@ export default function AdminProductos() {
     const t = normalizar(busqueda)
     const filtrados = productos.filter(p =>
       (filtroEstado === 'todos' || (filtroEstado === 'activos') === (p.activo !== false)) &&
-      (!t || normalizar(p.nombre).includes(t) || normalizar(p.marca ?? '').includes(t)) &&
+      (!t || normalizar(p.nombre).includes(t) || normalizar(p.marca ?? '').includes(t) || normalizar(p.codigo ?? '').includes(t)) &&
       (!soloBajo || p.stock <= STOCK_BAJO))
     return ordenar(filtrados, p => {
       switch (orden?.col) {
-        case 'id': return p.id
+        case 'codigo': return p.codigo ?? ''
         case 'nombre': return p.nombre
         case 'marca': return p.marca ?? ''
         case 'categoria': return nombreCategoria(p.categoriaId)
@@ -107,7 +107,7 @@ export default function AdminProductos() {
         catch (err) { aviso += ` Pero la imagen no se pudo subir: ${err instanceof Error ? err.message : 'error'}.` }
       }
       await recargar()
-      void recargarTienda()
+      void recargarTienda()   // mantiene al día el catálogo público (chatbot, buscador)
       setEditando(null)
       setAviso({ ok: true, texto: aviso })
     } catch (err) {
@@ -156,7 +156,7 @@ export default function AdminProductos() {
       </section>
 
       <div className="barra-herramientas">
-        <input type="search" className="form-control" placeholder="Buscar por nombre o marca" aria-label="Buscar productos"
+        <input type="search" className="form-control" placeholder="Buscar por nombre, marca o código" aria-label="Buscar productos"
                value={busqueda} onChange={e => setBusqueda(e.target.value)} />
         <select className="form-select w-auto" aria-label="Filtrar por estado" value={filtroEstado}
                 onChange={e => setFiltroEstado(e.target.value as FiltroEstado)}>
@@ -175,14 +175,14 @@ export default function AdminProductos() {
       <div className="tabla-envoltorio">
         <table className="tabla-admin">
           <thead>
-            <tr>{th('id', '#')}{th('nombre', 'Nombre')}{th('marca', 'Marca')}{th('categoria', 'Categoría')}{th('precio', 'Precio')}{th('stock', 'Inventario')}<th>Acciones</th></tr>
+            <tr>{th('codigo', 'Código')}{th('nombre', 'Nombre')}{th('marca', 'Marca')}{th('categoria', 'Categoría')}{th('precio', 'Precio')}{th('stock', 'Inventario')}<th>Acciones</th></tr>
           </thead>
           <tbody>
             {visibles.length === 0 ? (
               <tr><td colSpan={7}><div className="vacio"><i className="bi bi-inbox" />{cargando ? 'Cargando…' : 'No hay productos que coincidan.'}</div></td></tr>
             ) : visibles.map(p => (
               <tr key={p.id} className={p.activo === false ? 'fila-inactiva' : p.stock <= 0 ? 'fila-agotada' : ''}>
-                <td className="texto-tenue">{p.id}</td>
+                <td className="texto-tenue text-nowrap">{p.codigo ?? `#${p.id}`}</td>
                 <td className="fw-semibold">{p.nombre}{p.activo === false && <span className="badge bg-secondary ms-2">Inhabilitado</span>}</td>
                 <td>{p.marca}</td>
                 <td><span className="etiqueta-categoria">{nombreCategoria(p.categoriaId)}</span></td>
@@ -205,6 +205,13 @@ export default function AdminProductos() {
           <Modal.Header closeButton><Modal.Title>{editando === 'nuevo' ? 'Nuevo producto' : 'Editar producto'}</Modal.Title></Modal.Header>
           <Modal.Body>
             {errorForm && <div className="alert alert-danger py-2">{errorForm}</div>}
+            {editando !== null && editando !== 'nuevo' && editando.codigo && (
+              <div className="mb-3">
+                <label className="form-label" htmlFor="pCodigo">Código</label>
+                <input id="pCodigo" className="form-control" value={editando.codigo} readOnly disabled />
+                <div className="form-text">Lo asigna el sistema y no se puede cambiar.</div>
+              </div>
+            )}
             <div className="mb-3">
               <label className="form-label" htmlFor="pNombre">Nombre</label>
               <input id="pNombre" className="form-control" placeholder="Ej. Mouse Gamer RGB" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} />
@@ -229,7 +236,7 @@ export default function AdminProductos() {
             <div className="mb-3">
               <label className="form-label" htmlFor="pImagen">Imagen</label>
               <input id="pImagen" type="file" accept="image/*" className="form-control" onChange={e => setImagen(e.target.files?.[0] ?? null)} />
-              <div className="form-text">{editando === 'nuevo' ? 'Opcional (máx. 5 MB).' : 'Déjalo vacío para conservar la imagen actual (máx. 5 MB).'}</div>
+              <div className="form-text">{editando === 'nuevo' ? 'Opcional (máx. 5 MB). El código (p. ej. LAP-0001) se asigna solo al crear, según su categoría.' : 'Déjalo vacío para conservar la imagen actual (máx. 5 MB).'}</div>
             </div>
             <div className="row g-3">
               <div className="col-sm-6">

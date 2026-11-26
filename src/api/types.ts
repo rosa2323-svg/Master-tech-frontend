@@ -73,6 +73,30 @@ export interface Venta {
   detalles: DetalleVenta[]
 }
 
+/** Dirección de entrega a domicilio enviada al pagar. */
+export interface EntregaInput {
+  direccion: string
+  latitud: number
+  longitud: number
+}
+
+/** Respuesta de /pedidos/cotizar. Si `cubierto` es false solo viene `mensaje`. */
+export interface Cotizacion {
+  cubierto: boolean
+  mensaje?: string | null
+  subtotal?: number
+  costoEnvio?: number
+  total?: number
+  envioGratis?: boolean
+  distanciaKm?: number
+  sedeNombre?: string
+  tarifaNombre?: string
+  /** YYYY-MM-DD */
+  entregaDesde?: string
+  /** YYYY-MM-DD */
+  entregaHasta?: string
+}
+
 export interface Usuario {
   id: number
   nombre: string

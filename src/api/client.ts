@@ -1,5 +1,5 @@
 import type {
-  AgrupacionTendencia, PuntoTendencia, ConcentracionIngresos, IngresoPromedio, IngresoDiario, ProductosVendidos, BotHistorial, BotRespuesta, Categoria, ConfigEnvio, Feriado, HuecoTarifa, Perfil, Producto, ProductoInput, PuntoReparto, PuntoRepartoInput, RegistroData, Rol, Sesion, TarifaEnvio, TarifaEnvioInput, Usuario, Venta,
+  AgrupacionTendencia, PuntoTendencia, ConcentracionIngresos, IngresoPromedio, IngresoDiario, ProductosVendidos, BotHistorial, BotRespuesta, Categoria, ConfigEnvio, Cotizacion, EntregaInput, Feriado, HuecoTarifa, Perfil, Producto, ProductoInput, PuntoReparto, PuntoRepartoInput, RegistroData, Rol, Sesion, TarifaEnvio, TarifaEnvioInput, Usuario, Venta,
 } from './types'
 
 // Cada variable admite UNA o VARIAS URLs separadas por coma, en orden de preferencia:
@@ -209,8 +209,10 @@ export const api = {
   misPedidos: () => get<Venta[]>('/api/v1/me/pedidos'),
 
   // Pago
-  checkout: (items: { productoId: number; cantidad: number }[]) =>
-      send<{ url: string }>('POST', '/api/v1/pedidos/checkout', { items }),
+  cotizarEnvio: (items: { productoId: number; cantidad: number }[], latitud: number, longitud: number) =>
+      send<Cotizacion>('POST', '/api/v1/pedidos/cotizar', { items, latitud, longitud }),
+  checkout: (items: { productoId: number; cantidad: number }[], entrega: EntregaInput) =>
+      send<{ url: string }>('POST', '/api/v1/pedidos/checkout', { items, entrega }),
   confirmarPago: (sessionId: string) => send<Venta>('POST', '/api/v1/pedidos/confirmar', { sessionId }),
 }
 

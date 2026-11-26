@@ -147,6 +147,67 @@ export interface ConcentracionIngresos {
   otrosPct: number
 }
 
+// ---- Envíos: configuración (solo ADMIN) ----
+export interface PuntoReparto {
+  id: number
+  nombre: string
+  direccion: string
+  latitud: number
+  longitud: number
+  permiteRecojo: boolean
+  activo: boolean
+}
+
+export interface PuntoRepartoInput {
+  nombre: string
+  direccion: string
+  latitud: number
+  longitud: number
+  permiteRecojo: boolean
+}
+
+/** Tramo de distancia [desde, hasta) en km, con costo en soles y plazo en días hábiles. */
+export interface TarifaEnvio {
+  id: number
+  nombre: string
+  distanciaDesdeKm: number
+  distanciaHastaKm: number
+  costo: number
+  envioGratisDesde: number | null
+  diasEntregaMin: number
+  diasEntregaMax: number
+  activo: boolean
+}
+
+export interface TarifaEnvioInput {
+  nombre: string
+  distanciaDesdeKm: number
+  distanciaHastaKm: number
+  costo: number
+  envioGratisDesde: number | null
+  diasEntregaMin: number
+  diasEntregaMax: number
+}
+
+/** Rango de km que ningún tramo activo cubre. */
+export interface HuecoTarifa {
+  desdeKm: number
+  hastaKm: number
+}
+
+export interface ConfigEnvio {
+  /** HH:mm (el servidor puede devolver HH:mm:ss). */
+  horaCorte: string
+  diasPreparacion: number
+  zonaHoraria: string
+}
+
+export interface Feriado {
+  /** AAAA-MM-DD */
+  fecha: string
+  descripcion: string
+}
+
 // ---- Asistente (bot-core): http://localhost:8090 ----
 /** Acción de interfaz que acompaña a una respuesta. Hoy: { type: 'products', ids } = tarjetas de producto. */
 export interface BotAccion {

@@ -1,7 +1,5 @@
 export interface Producto {
   id: number
-  /** Código legible y único (LAP-0001: abreviatura de la categoría + número). Lo asigna el servidor; es de solo lectura. */
-  codigo?: string
   nombre: string
   descripcion?: string | null
   precio: number
@@ -10,8 +8,6 @@ export interface Producto {
   stock: number
   categoriaId: number
   categoriaNombre?: string | null
-  /** false = inhabilitado (baja lógica): no se muestra ni se vende en la tienda. */
-  activo?: boolean
 }
 
 export interface ProductoInput {
@@ -25,8 +21,6 @@ export interface ProductoInput {
 
 export interface Categoria {
   id: number
-  /** Abreviatura única de la categoría (LAP, CON…). Lo asigna el servidor; es de solo lectura. */
-  codigo?: string
   nombre: string
   descripcion?: string | null
   imagenUrl?: string | null
@@ -64,6 +58,18 @@ export interface Venta {
   usuarioEmail?: string
   usuarioDireccion?: string | null
   usuarioTelefono?: string | null
+  tipoEntrega?: 'DOMICILIO' | 'RECOJO'
+  costoEnvio?: number
+  direccionEntrega?: string | null
+  latitudEntrega?: number | null
+  longitudEntrega?: number | null
+  distanciaKm?: number | null
+  puntoRepartoId?: number | null
+  puntoRepartoNombre?: string | null
+  fechaEstimadaEntrega?: string | null
+  fechaEntregaReal?: string | null
+  fechaAnulacion?: string | null
+  motivoAnulacion?: string | null
   detalles: DetalleVenta[]
 }
 
@@ -139,6 +145,67 @@ export interface ConcentracionIngresos {
   productos: ItemConcentracion[]
   otrosIngreso: number
   otrosPct: number
+}
+
+// ---- Envíos: configuración (solo ADMIN) ----
+export interface PuntoReparto {
+  id: number
+  nombre: string
+  direccion: string
+  latitud: number
+  longitud: number
+  permiteRecojo: boolean
+  activo: boolean
+}
+
+export interface PuntoRepartoInput {
+  nombre: string
+  direccion: string
+  latitud: number
+  longitud: number
+  permiteRecojo: boolean
+}
+
+/** Tramo de distancia [desde, hasta) en km, con costo en soles y plazo en días hábiles. */
+export interface TarifaEnvio {
+  id: number
+  nombre: string
+  distanciaDesdeKm: number
+  distanciaHastaKm: number
+  costo: number
+  envioGratisDesde: number | null
+  diasEntregaMin: number
+  diasEntregaMax: number
+  activo: boolean
+}
+
+export interface TarifaEnvioInput {
+  nombre: string
+  distanciaDesdeKm: number
+  distanciaHastaKm: number
+  costo: number
+  envioGratisDesde: number | null
+  diasEntregaMin: number
+  diasEntregaMax: number
+}
+
+/** Rango de km que ningún tramo activo cubre. */
+export interface HuecoTarifa {
+  desdeKm: number
+  hastaKm: number
+}
+
+export interface ConfigEnvio {
+  /** HH:mm (el servidor puede devolver HH:mm:ss). */
+  horaCorte: string
+  diasPreparacion: number
+  zonaHoraria: string
+}
+
+export interface Feriado {
+  /** AAAA-MM-DD */
+  fecha: string
+  descripcion: string
 }
 
 // ---- Asistente (bot-core): http://localhost:8090 ----

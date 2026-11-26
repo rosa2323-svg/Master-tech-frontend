@@ -1,12 +1,12 @@
 import type {
-  AgrupacionTendencia, PuntoTendencia, ConcentracionIngresos, IngresoPromedio, IngresoDiario, ProductosVendidos, BotHistorial, BotRespuesta, Categoria, Perfil, Producto, ProductoInput, RegistroData, Rol, Sesion, Usuario, Venta,
+  AgrupacionTendencia, PuntoTendencia, ConcentracionIngresos, IngresoPromedio, IngresoDiario, ProductosVendidos, BotHistorial, BotRespuesta, Categoria, ConfigEnvio, Feriado, HuecoTarifa, Perfil, Producto, ProductoInput, PuntoReparto, PuntoRepartoInput, RegistroData, Rol, Sesion, TarifaEnvio, TarifaEnvioInput, Usuario, Venta,
 } from './types'
 
 // Cada variable admite UNA o VARIAS URLs separadas por coma, en orden de preferencia:
 //   VITE_API_URL=http://localhost:8089,https://temporal-l5hx.onrender.com
 // Se usa la primera que responda; si falla (sin conexión o 502/503/504) se prueba la siguiente.
 const listaUrls = (valor: string | undefined, defecto: string) =>
-  (valor || defecto).split(',').map(u => u.trim().replace(/\/$/, '')).filter(Boolean)
+    (valor || defecto).split(',').map(u => u.trim().replace(/\/$/, '')).filter(Boolean)
 
 export const API_URLS = listaUrls(import.meta.env.VITE_API_URL, 'http://localhost:8089')
 
@@ -117,15 +117,14 @@ export const api = {
   me: () => get<Omit<Sesion, 'token'>>('/api/auth/me'),
 
   // Catálogo (público)
-  /** Catálogo público (solo habilitados). Con `todos` y sesión de ADMIN incluye los inhabilitados. */
-  productos: (todos = false) => get<Producto[]>(`/api/v1/productos${todos ? '?todos=true' : ''}`),
+  productos: () => get<Producto[]>('/api/v1/productos'),
   producto: (id: number | string) => get<Producto>(`/api/v1/productos/${id}`),
   categorias: () => get<Categoria[]>('/api/v1/categorias'),
 
   // Admin: productos
   crearProducto: (d: ProductoInput) => send<Producto>('POST', '/api/v1/productos', d),
   actualizarProducto: (id: number, d: ProductoInput) => send<Producto>('PUT', `/api/v1/productos/${id}`, d),
-  cambiarActivoProducto: (id: number, activo: boolean) => send<Producto>('PATCH', `/api/v1/productos/${id}/activo`, { activo }),
+  eliminarProducto: (id: number) => send<void>('DELETE', `/api/v1/productos/${id}`),
   subirImagenProducto: (id: number, archivo: File) => {
     const form = new FormData()
     form.append('imagen', archivo)
@@ -135,7 +134,7 @@ export const api = {
   // Admin: categorías
   crearCategoria: (d: { nombre: string; descripcion?: string }) => send<Categoria>('POST', '/api/v1/categorias', d),
   actualizarCategoria: (id: number, d: { nombre: string; descripcion?: string }) =>
-    send<Categoria>('PUT', `/api/v1/categorias/${id}`, d),
+      send<Categoria>('PUT', `/api/v1/categorias/${id}`, d),
   eliminarCategoria: (id: number) => send<void>('DELETE', `/api/v1/categorias/${id}`),
   subirImagenCategoria: (id: number, archivo: File) => {
     const form = new FormData()
@@ -181,17 +180,37 @@ export const api = {
   cambiarEstadoPedido: (id: number, estado: string) =>
       send<Venta>('PATCH', `/api/v1/despacho/pedidos/${id}/estado`, { estado }),
 
+  // Envíos: configuración (solo ADMIN)
+  puntosReparto: () => get<PuntoReparto[]>('/api/v1/envios/puntos-reparto'),
+  crearPuntoReparto: (d: PuntoRepartoInput) => send<PuntoReparto>('POST', '/api/v1/envios/puntos-reparto', d),
+  actualizarPuntoReparto: (id: number, d: PuntoRepartoInput) =>
+      send<PuntoReparto>('PUT', `/api/v1/envios/puntos-reparto/${id}`, d),
+  activarPuntoReparto: (id: number, activo: boolean) =>
+      send<PuntoReparto>('PATCH', `/api/v1/envios/puntos-reparto/${id}/activo`, { activo }),
+  tarifasEnvio: () => get<TarifaEnvio[]>('/api/v1/envios/tarifas'),
+  huecosTarifas: () => get<HuecoTarifa[]>('/api/v1/envios/tarifas/huecos'),
+  crearTarifaEnvio: (d: TarifaEnvioInput) => send<TarifaEnvio>('POST', '/api/v1/envios/tarifas', d),
+  actualizarTarifaEnvio: (id: number, d: TarifaEnvioInput) =>
+      send<TarifaEnvio>('PUT', `/api/v1/envios/tarifas/${id}`, d),
+  activarTarifaEnvio: (id: number, activo: boolean) =>
+      send<TarifaEnvio>('PATCH', `/api/v1/envios/tarifas/${id}/activo`, { activo }),
+  configEnvio: () => get<ConfigEnvio>('/api/v1/envios/configuracion'),
+  guardarConfigEnvio: (d: ConfigEnvio) => send<ConfigEnvio>('PUT', '/api/v1/envios/configuracion', d),
+  feriados: () => get<Feriado[]>('/api/v1/envios/feriados'),
+  crearFeriado: (d: Feriado) => send<Feriado>('POST', '/api/v1/envios/feriados', d),
+  eliminarFeriado: (fecha: string) => send<void>('DELETE', `/api/v1/envios/feriados/${fecha}`),
+
   // Cliente autenticado
   miPerfil: () => get<Perfil>('/api/v1/me'),
   actualizarPerfil: (d: { nombre: string; direccion: string; numeroTelefono: string }) =>
-    send<Perfil>('PUT', '/api/v1/me', d),
+      send<Perfil>('PUT', '/api/v1/me', d),
   cambiarPassword: (d: { passwordActual: string; passwordNuevo: string; passwordConfirm: string }) =>
-    send<{ mensaje: string }>('PUT', '/api/v1/me/password', d),
+      send<{ mensaje: string }>('PUT', '/api/v1/me/password', d),
   misPedidos: () => get<Venta[]>('/api/v1/me/pedidos'),
 
   // Pago
   checkout: (items: { productoId: number; cantidad: number }[]) =>
-    send<{ url: string }>('POST', '/api/v1/pedidos/checkout', { items }),
+      send<{ url: string }>('POST', '/api/v1/pedidos/checkout', { items }),
   confirmarPago: (sessionId: string) => send<Venta>('POST', '/api/v1/pedidos/confirmar', { sessionId }),
 }
 
@@ -233,7 +252,7 @@ export const bot = {
   historial: () => peticionBot<BotHistorial>('/history'),
   /** `nueva: true` abre una conversación nueva; si no, el servidor retoma la última. */
   chat: (message: string, conversationId: string | null, nueva: boolean) =>
-    peticionBot<BotRespuesta>('/chat', { method: 'POST', body: { message, conversation_id: conversationId, new: nueva } }),
+      peticionBot<BotRespuesta>('/chat', { method: 'POST', body: { message, conversation_id: conversationId, new: nueva } }),
   /** Borra el historial y las preferencias que el asistente guardó del cliente. */
   olvidarme: () => peticionBot<void>('/me/data', { method: 'DELETE' }),
 }

@@ -8,6 +8,7 @@ import Category from './pages/Category'
 import Home from './pages/Home'
 import Mision from './pages/Mision'
 import Nosotros from './pages/Nosotros'
+import Pago from './pages/Pago'
 import PagoConfirmar from './pages/PagoConfirmar'
 import ProductDetail from './pages/ProductDetail'
 import Profile from './pages/Profile'
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="terminos" element={<Terminos />} />
         <Route element={<ProtectedRoute />}>
           <Route path="perfil" element={<Profile />} />
+          <Route path="pago" element={<Pago />} />
           <Route path="pago/confirmar" element={<PagoConfirmar />} />
         </Route>
       </Route>

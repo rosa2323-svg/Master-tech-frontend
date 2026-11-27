@@ -6,6 +6,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css'
 import './styles/estilos.css'
 import './styles/chatbot.css'
 import App from './App'
+import { ErrorBoundaryRuta } from './components/ErrorBoundary'
 import { AlertProvider } from './context/AlertContext'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
@@ -30,7 +31,9 @@ createRoot(document.getElementById('root')!).render(
         <AuthProvider>
           <CatalogProvider>
             <CartProvider>
-              <App />
+              <ErrorBoundaryRuta>
+                <App />
+              </ErrorBoundaryRuta>
             </CartProvider>
           </CatalogProvider>
         </AuthProvider>

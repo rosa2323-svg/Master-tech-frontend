@@ -36,19 +36,26 @@ export interface Mapas { Map: BibliotecaMapas['Map']; Marcador: BibliotecaMarcad
 
 let carga: Promise<void> | null = null
 
+const CALLBACK = '__googleMapsListo'
+
+/** `google.maps` puede existir a medias (sin importLibrary) mientras el script termina de inicializarse. */
+const apiLista = () => typeof window.google?.maps?.importLibrary === 'function'
+
 function cargarScript(clave: string): Promise<void> {
-  if (window.google?.maps) return Promise.resolve()
+  if (apiLista()) return Promise.resolve()
   if (!carga) {
     carga = new Promise<void>((resolve, reject) => {
+      const fallo = (mensaje: string) => { carga = null; reject(new Error(mensaje)) } // permite reintentar
+      const w = window as unknown as Record<string, unknown>
+
+      // Con loading=async, Google llama a este callback cuando importLibrary ya está disponible
+      // (el evento onload del <script> llega antes y por eso fallaba la primera vez).
+      w[CALLBACK] = () => { delete w[CALLBACK]; resolve() }
+
       const script = document.createElement('script')
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(clave)}&v=weekly&loading=async&language=es&region=PE`
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(clave)}&v=weekly&loading=async&language=es&region=PE&callback=${CALLBACK}`
       script.async = true
-      script.onload = () => resolve()
-      script.onerror = () => {
-        script.remove()
-        carga = null // permite reintentar
-        reject(new Error('No se pudo cargar Google Maps. Revisa tu conexión.'))
-      }
+      script.onerror = () => { script.remove(); fallo('No se pudo cargar Google Maps. Revisa tu conexión.') }
       document.head.appendChild(script)
     })
   }
@@ -58,7 +65,7 @@ function cargarScript(clave: string): Promise<void> {
 export async function cargarMapas(clave: string): Promise<Mapas> {
   await cargarScript(clave)
   const api = window.google?.maps
-  if (!api) throw new Error('Google Maps no está disponible.')
+  if (!api || typeof api.importLibrary !== 'function') throw new Error('Google Maps no está disponible.')
   const [{ Map }, { AdvancedMarkerElement }] = await Promise.all([api.importLibrary('maps'), api.importLibrary('marker')])
   return { Map, Marcador: AdvancedMarkerElement }
 }

@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useState } from 'react'
 import { api } from '../../api/client'
 import type { Venta } from '../../api/types'
 import SortableTh, { alternarOrden, ordenar, type Orden } from '../../components/SortableTh'
+import { claseEstado } from '../../utils/estados'
 import { formatoFecha, formatoSoles, normalizar } from '../../utils/format'
 
 type Col = 'id' | 'fecha' | 'cliente' | 'numeroOrden' | 'estado' | 'items' | 'total'
@@ -76,7 +77,7 @@ export default function AdminVentas() {
                   <td>{formatoFecha(v.fecha)}</td>
                   <td>{v.usuarioNombre ?? '—'}<div className="texto-tenue small">{v.usuarioEmail}</div></td>
                   <td className="fw-semibold">{v.numeroOrden}</td>
-                  <td><span className="badge bg-success">{v.estado || 'Pagado'}</span></td>
+                  <td><span className={`badge ${claseEstado(v.estado || 'Pagado')}`}>{v.estado || 'Pagado'}</span></td>
                   <td className="text-center">{v.cantidadItems}</td>
                   <td className="precio-admin">{formatoSoles(v.total)}</td>
                 </tr>

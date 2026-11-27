@@ -1,5 +1,5 @@
 import type {
-  AgrupacionTendencia, PuntoTendencia, ConcentracionIngresos, IngresoPromedio, IngresoDiario, ProductosVendidos, BotHistorial, BotRespuesta, Categoria, ConfigEnvio, Cotizacion, DestinoEnvio, EntregaCheckout, EnvioEvento, Feriado, HuecoTarifa, Lugar, Perfil, Producto, ProductoInput, PuntoReparto, PuntoRepartoInput, RegistroData, Rol, Sesion, Sugerencia, TarifaEnvio, TarifaEnvioInput, Usuario, Venta,
+  AgrupacionTendencia, PuntoTendencia, ConcentracionIngresos, IngresoPromedio, IngresoDiario, ProductosVendidos, BotHistorial, BotRespuesta, Categoria, ConfigEnvio, Cotizacion, DestinoEnvio, EntregaCheckout, EnvioEvento, Feriado, HuecoTarifa, Lugar, Perfil, Producto, ProductoInput, PuntoReparto, PuntoRepartoInput, RegistroData, Rol, Sesion, SolicitudReembolso, Sugerencia, TarifaEnvio, TarifaEnvioInput, Usuario, Venta,
 } from './types'
 
 // Cada variable admite UNA o VARIAS URLs separadas por coma, en orden de preferencia:
@@ -181,6 +181,13 @@ export const api = {
       send<Venta>('PATCH', `/api/v1/despacho/pedidos/${id}/estado`, { estado, nota: nota?.trim() || undefined }),
   eventosPedido: (id: number) => get<EnvioEvento[]>(`/api/v1/despacho/pedidos/${id}/eventos`),
 
+  // Reembolsos (solo ADMIN)
+  reembolsos: (estado?: string) => get<SolicitudReembolso[]>(`/api/v1/reembolsos${estado ? `?estado=${estado}` : ''}`),
+  aprobarReembolso: (id: number, nota?: string) =>
+    send<SolicitudReembolso>('POST', `/api/v1/reembolsos/${id}/aprobar`, { nota: nota?.trim() || undefined }),
+  rechazarReembolso: (id: number, nota: string) =>
+    send<SolicitudReembolso>('POST', `/api/v1/reembolsos/${id}/rechazar`, { nota: nota.trim() }),
+
   // Envíos: configuración (solo ADMIN)
   puntosReparto: () => get<PuntoReparto[]>('/api/v1/envios/puntos-reparto'),
   crearPuntoReparto: (d: PuntoRepartoInput) => send<PuntoReparto>('POST', '/api/v1/envios/puntos-reparto', d),
@@ -208,6 +215,9 @@ export const api = {
   cambiarPassword: (d: { passwordActual: string; passwordNuevo: string; passwordConfirm: string }) =>
     send<{ mensaje: string }>('PUT', '/api/v1/me/password', d),
   misPedidos: () => get<Venta[]>('/api/v1/me/pedidos'),
+  solicitarReembolso: (ventaId: number, motivo: string) =>
+    send<SolicitudReembolso>('POST', `/api/v1/me/pedidos/${ventaId}/reembolso`, { motivo }),
+  misReembolsos: () => get<SolicitudReembolso[]>('/api/v1/me/reembolsos'),
   seguimientoPedido: (id: number) => get<EnvioEvento[]>(`/api/v1/me/pedidos/${id}/seguimiento`),
 
   // Pago

@@ -8,6 +8,7 @@ const ENLACES = [
   { to: '/admin/ventas', icono: 'bi-receipt', texto: 'Ventas' },
   { to: '/admin/dashboard', icono: 'bi-bar-chart-line', texto: 'Dashboard' },
   { to: '/admin/usuarios', icono: 'bi-people', texto: 'Usuarios' },
+  { to: '/admin/reembolsos', icono: 'bi-arrow-counterclockwise', texto: 'Reembolsos' },
   { to: '/admin/envios', icono: 'bi-geo-alt', texto: 'Envíos' },
   { to: '/despacho/pedidos', icono: 'bi-truck', texto: 'Despacho' },
 ]
@@ -19,22 +20,22 @@ export default function AdminLayout() {
   }, [])
 
   return (
-      <>
-        <nav className="navbar navbar-dark bg-dark admin-barra">
-          <div className="container-fluid">
-            <Link className="navbar-brand fw-bold" to="/"><i className="bi bi-house-fill me-2" />MASTER TECH</Link>
-            <div className="admin-enlaces">
-              {ENLACES.map(e => (
-                  <NavLink key={e.to} to={e.to} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                    {e.icono && <i className={`bi ${e.icono}`} />} {e.texto}
-                  </NavLink>
-              ))}
-            </div>
+    <>
+      <nav className="navbar navbar-dark bg-dark admin-barra">
+        <div className="container-fluid">
+          <Link className="navbar-brand fw-bold" to="/"><i className="bi bi-house-fill me-2" />MASTER TECH</Link>
+          <div className="admin-enlaces">
+            {ENLACES.map(e => (
+              <NavLink key={e.to} to={e.to} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                {e.icono && <i className={`bi ${e.icono}`} />} {e.texto}
+              </NavLink>
+            ))}
           </div>
-        </nav>
-        <main className="admin-principal">
-          <Outlet />
-        </main>
-      </>
+        </div>
+      </nav>
+      <main className="admin-principal">
+        <Outlet />
+      </main>
+    </>
   )
 }

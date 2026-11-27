@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Accordion, Modal, Tab, Tabs } from 'react-bootstrap'
 import { api } from '../api/client'
-import type { Perfil, Venta } from '../api/types'
+import type { Perfil, SolicitudReembolso, Venta } from '../api/types'
 import HistorialPedido from '../components/HistorialPedido'
 import PasswordInput from '../components/PasswordInput'
 import { useAlert } from '../context/AlertContext'
@@ -30,6 +30,11 @@ export default function Profile() {
   const [perfil, setPerfil] = useState<Perfil | null>(null)
   const [pedidos, setPedidos] = useState<Venta[]>([])
   const [cargando, setCargando] = useState(true)
+  const [reembolsos, setReembolsos] = useState<SolicitudReembolso[]>([])
+  const [aReembolsar, setAReembolsar] = useState<Venta | null>(null)
+  const [motivo, setMotivo] = useState('')
+  const [enviandoReembolso, setEnviandoReembolso] = useState(false)
+  const [errorReembolso, setErrorReembolso] = useState<string | null>(null)
   const [pedidoAbierto, setPedidoAbierto] = useState<string | null>(null)
   const [icono, setIcono] = useState(iconoGuardado)
   const [modalIconos, setModalIconos] = useState(false)
@@ -44,10 +49,11 @@ export default function Profile() {
   useEffect(() => { document.title = 'Mi perfil | MASTER TECH' }, [])
 
   useEffect(() => {
-    Promise.all([api.miPerfil(), api.misPedidos()])
-      .then(([p, v]) => {
+    Promise.all([api.miPerfil(), api.misPedidos(), api.misReembolsos()])
+      .then(([p, v, r]) => {
         setPerfil(p)
         setPedidos(v)
+        setReembolsos(r)
         setDatos({ nombre: p.nombre ?? '', direccion: p.direccion ?? '', telefono: p.numeroTelefono ?? '' })
       })
       .catch(e => mostrarAlerta(e instanceof Error ? e.message : 'No se pudo cargar tu perfil.'))
@@ -88,6 +94,32 @@ export default function Profile() {
       setPwMsg({ ok: true, texto: 'Contraseña actualizada correctamente.' })
     } catch (err) {
       setPwMsg({ ok: false, texto: err instanceof Error ? err.message : 'No se pudo cambiar la contraseña.' })
+    }
+  }
+
+  // La solicitud más reciente de cada pedido (la lista llega con las más nuevas primero).
+  const reembolsoDe = (ventaId: number) => reembolsos.find(r => r.ventaId === ventaId)
+  const puedeSolicitar = (v: Venta) => {
+    const r = reembolsoDe(v.id)
+    return (v.estado === 'Pagado' || v.estado === 'Preparando') && r?.estado !== 'PENDIENTE'
+  }
+
+  const abrirReembolso = (v: Venta) => { setAReembolsar(v); setMotivo(''); setErrorReembolso(null) }
+
+  const enviarReembolso = async () => {
+    if (!aReembolsar) return
+    if (motivo.trim().length < 5) return setErrorReembolso('Cuéntanos el motivo (mínimo 5 caracteres).')
+    setEnviandoReembolso(true)
+    setErrorReembolso(null)
+    try {
+      const nueva = await api.solicitarReembolso(aReembolsar.id, motivo.trim())
+      setReembolsos(rs => [nueva, ...rs])
+      setAReembolsar(null)
+      mostrarAlerta('Recibimos tu solicitud de reembolso. Te avisaremos cuando sea revisada.')
+    } catch (err) {
+      setErrorReembolso(err instanceof Error ? err.message : 'No se pudo enviar la solicitud.')
+    } finally {
+      setEnviandoReembolso(false)
     }
   }
 
@@ -219,6 +251,33 @@ export default function Profile() {
                         ))}
                       </tbody>
                     </table>
+                    {(() => {
+                      const r = reembolsoDe(v.id)
+                      return (
+                        <div className="mb-3">
+                          {v.estado === 'ANULADA' && (
+                            <div className="alert alert-danger py-2 small mb-2">
+                              <i className="bi bi-arrow-counterclockwise me-1" />Pedido anulado: te devolvimos {formatoSoles(v.total + (v.costoEnvio ?? 0))} a tu medio de pago.
+                            </div>
+                          )}
+                          {r?.estado === 'PENDIENTE' && (
+                            <div className="alert alert-warning py-2 small mb-2">
+                              <i className="bi bi-hourglass-split me-1" />Solicitud de reembolso en revisión.
+                            </div>
+                          )}
+                          {r?.estado === 'RECHAZADA' && v.estado !== 'ANULADA' && (
+                            <div className="alert alert-secondary py-2 small mb-2">
+                              <i className="bi bi-x-circle me-1" />Tu solicitud de reembolso fue rechazada{r.notaAdmin ? `: ${r.notaAdmin}` : '.'}
+                            </div>
+                          )}
+                          {puedeSolicitar(v) && (
+                            <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => abrirReembolso(v)}>
+                              <i className="bi bi-arrow-counterclockwise me-1" />Solicitar reembolso
+                            </button>
+                          )}
+                        </div>
+                      )
+                    })()}
                     {pedidoAbierto === String(v.id) && (
                       <>
                         <div className="fw-semibold small mb-2">Seguimiento</div>
@@ -232,6 +291,26 @@ export default function Profile() {
           )}
         </Tab>
       </Tabs>
+
+      <Modal show={aReembolsar !== null} onHide={() => !enviandoReembolso && setAReembolsar(null)} centered>
+        <Modal.Header closeButton><Modal.Title className="fw-bold fs-5">Solicitar reembolso</Modal.Title></Modal.Header>
+        <Modal.Body>
+          {errorReembolso && <div className="alert alert-danger py-2">{errorReembolso}</div>}
+          <p className="small text-muted">
+            Pedido <strong>{aReembolsar?.numeroOrden}</strong>. Si se aprueba, te devolvemos el total pagado (productos y envío) y el pedido se anula.
+            Solo es posible antes de que salga a reparto o esté listo para recoger.
+          </p>
+          <label className="form-label small" htmlFor="motivoReembolso">¿Por qué quieres el reembolso?</label>
+          <textarea id="motivoReembolso" className="form-control" rows={3} maxLength={500} value={motivo}
+                    onChange={e => setMotivo(e.target.value)} />
+        </Modal.Body>
+        <Modal.Footer>
+          <button type="button" className="btn btn-outline-secondary" disabled={enviandoReembolso} onClick={() => setAReembolsar(null)}>Cancelar</button>
+          <button type="button" className="btn btn-danger px-4" disabled={enviandoReembolso} onClick={enviarReembolso}>
+            {enviandoReembolso ? 'Enviando…' : 'Enviar solicitud'}
+          </button>
+        </Modal.Footer>
+      </Modal>
 
       <Modal show={modalIconos} onHide={() => setModalIconos(false)} centered contentClassName="border-0 shadow-lg rounded-4">
         <Modal.Header closeButton><Modal.Title className="fw-bold fs-5">Elige tu ícono de perfil</Modal.Title></Modal.Header>

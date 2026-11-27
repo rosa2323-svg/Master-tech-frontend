@@ -142,10 +142,15 @@ export default function AdminDespacho() {
                                             </div>
                                         )}
                                     </td>
-                                    <td><span className={`badge ${claseEstado(p.estado)}`}>{p.estado}</span></td>
+                                    <td>
+                                        <span className={`badge ${claseEstado(p.estado)}`}>{p.estado}</span>
+                                        {p.reembolsoPendiente && <div><span className="badge bg-danger mt-1">Reembolso solicitado</span></div>}
+                                    </td>
                                     <td className="text-center">{p.cantidadItems}</td>
                                     <td>
-                                        {p.siguienteEstado ? (
+                                        {p.reembolsoPendiente ? (
+                                            <span className="texto-tenue small">Resolver reembolso en Admin</span>
+                                        ) : p.siguienteEstado ? (
                                             <button type="button" className="btn btn-sm btn-primary"
                                                     onClick={e => { e.stopPropagation(); abrirCambio(p) }}>
                                                 Pasar a {p.siguienteEstado}

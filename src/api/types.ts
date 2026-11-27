@@ -55,6 +55,8 @@ export interface Venta {
   estado: string
   /** Próximo estado del flujo (según sea a domicilio o recojo); null si terminó. */
   siguienteEstado?: string | null
+  /** Solo en despacho: el cliente pidió reembolso y falta resolverlo. */
+  reembolsoPendiente?: boolean
   usuarioId?: number
   usuarioNombre?: string
   usuarioEmail?: string
@@ -73,6 +75,25 @@ export interface Venta {
   fechaAnulacion?: string | null
   motivoAnulacion?: string | null
   detalles: DetalleVenta[]
+}
+
+/** Solicitud de reembolso de un pedido. */
+export interface SolicitudReembolso {
+  id: number
+  ventaId: number
+  numeroOrden: string
+  usuarioNombre?: string | null
+  usuarioEmail?: string | null
+  estadoVenta: string
+  tipoEntrega?: string | null
+  /** Productos + envío. */
+  monto: number
+  motivo: string
+  estado: 'PENDIENTE' | 'APROBADA' | 'RECHAZADA'
+  fechaSolicitud: string
+  fechaResolucion?: string | null
+  resueltoPorNombre?: string | null
+  notaAdmin?: string | null
 }
 
 /** Un paso del historial de un pedido. */

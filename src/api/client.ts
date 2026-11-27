@@ -59,10 +59,48 @@ export const tokenStore = {
 
 export class ApiError extends Error {
   status: number
-  constructor(status: number, message: string) {
+  /** Errores de validación del backend: campo -> mensaje (solo en 400 de formularios). */
+  fieldErrors?: Record<string, string>
+  /** Código corto de un error 500: sirve para ubicarlo en los logs del servidor. */
+  referencia?: string
+  constructor(status: number, message: string, extra: { fieldErrors?: Record<string, string>; referencia?: string } = {}) {
     super(message)
     this.status = status
+    this.fieldErrors = extra.fieldErrors
+    this.referencia = extra.referencia
   }
+  /** true si nunca hubo respuesta del servidor (sin internet, servidor caído, tiempo agotado). */
+  get esDeRed() { return this.status === 0 }
+}
+
+/** Mensaje para el usuario según el código HTTP, cuando el servidor no envió uno propio (p. ej. un 502 de Render). */
+function mensajePorEstado(status: number): string {
+  if (status === 400) return 'Los datos enviados no son válidos.'
+  if (status === 401) return 'Tu sesión expiró. Inicia sesión de nuevo.'
+  if (status === 403) return 'No tienes permisos para esta acción.'
+  if (status === 404) return 'No se encontró lo que buscas.'
+  if (status === 408) return 'La petición tardó demasiado. Inténtalo de nuevo.'
+  if (status === 413) return 'El archivo es demasiado grande.'
+  if (status === 429) return 'Demasiadas solicitudes seguidas. Espera un momento e inténtalo de nuevo.'
+  if (status >= 500) return 'El servidor tuvo un problema. Inténtalo de nuevo en unos minutos.'
+  return `Error ${status}`
+}
+
+function mensajeSinConexion(): string {
+  return typeof navigator !== 'undefined' && navigator.onLine === false
+    ? 'Sin conexión a internet. Revisa tu red e inténtalo de nuevo.'
+    : 'No se pudo conectar con el servidor. Inténtalo de nuevo en unos minutos.'
+}
+
+/**
+ * Texto seguro para mostrar al usuario a partir de cualquier error capturado.
+ * Solo se muestra el mensaje de un ApiError (viene del backend, ya redactado para el usuario);
+ * un Error cualquiera (TypeError, fallo de código…) queda en consola y se muestra `porDefecto`.
+ */
+export function mensajeError(e: unknown, porDefecto: string): string {
+  if (e instanceof ApiError) return e.message
+  console.error(e)
+  return porDefecto
 }
 
 // El AuthContext registra aquí qué hacer cuando el backend responde 401 con un token guardado.
@@ -89,18 +127,19 @@ async function peticion<T>(ruta: string, { method = 'GET', body, form }: Opcione
       body: form ?? (body !== undefined ? JSON.stringify(body) : undefined),
     })
   } catch {
-    throw new ApiError(0, 'No se pudo conectar con el servidor. Revisa que el backend esté en marcha.')
+    throw new ApiError(0, mensajeSinConexion())
   }
 
   if (resp.status === 204) return undefined as T
 
   const texto = await resp.text()
   let datos: unknown = null
-  if (texto) { try { datos = JSON.parse(texto) } catch { datos = null } }
+  let jsonInvalido = false
+  if (texto) { try { datos = JSON.parse(texto) } catch { jsonInvalido = true } }
 
   if (!resp.ok) {
-    const d = (datos ?? {}) as { message?: string; error?: string }
-    let mensaje = d.message || d.error || `Error ${resp.status}`
+    const d = (datos ?? {}) as { message?: string; error?: string; fieldErrors?: Record<string, string>; referencia?: string }
+    let mensaje = d.message || d.error || mensajePorEstado(resp.status)
     // «Recurso no encontrado» en una ruta del API = ese servidor no tiene la función (versión anterior desplegada).
     if (resp.status === 404 && mensaje === 'Recurso no encontrado') {
       let servidor = ''
@@ -108,8 +147,11 @@ async function peticion<T>(ruta: string, { method = 'GET', body, form }: Opcione
       mensaje = `El servidor${servidor} no tiene esta función: probablemente tiene una versión anterior del backend.`
     }
     if (resp.status === 401 && token && ruta !== '/api/auth/login') onNoAutorizado?.()
-    throw new ApiError(resp.status, mensaje)
+    if (d.referencia) mensaje += ` (Ref: ${d.referencia})`
+    throw new ApiError(resp.status, mensaje, { fieldErrors: d.fieldErrors, referencia: d.referencia })
   }
+  // 200 con un cuerpo que no es JSON (p. ej. una página HTML de un proxy o de otro servidor): no es una respuesta válida.
+  if (jsonInvalido) throw new ApiError(resp.status, 'El servidor devolvió una respuesta inesperada. Inténtalo de nuevo.')
   return datos as T
 }
 
@@ -259,7 +301,7 @@ async function peticionBot<T>(ruta: string, { method = 'GET', body }: { method?:
   try {
     resp = await fetchBot(ruta, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined })
   } catch {
-    throw new ApiError(0, 'No se pudo conectar con el asistente.')
+    throw new ApiError(0, navigator.onLine === false ? mensajeSinConexion() : 'No se pudo conectar con el asistente.')
   }
 
   if (resp.status === 204) return undefined as T
@@ -270,7 +312,7 @@ async function peticionBot<T>(ruta: string, { method = 'GET', body }: { method?:
   if (!resp.ok) {
     // FastAPI: { detail: "..." } (errores propios) o { detail: [ ... ] } (validación 422)
     const detalle = (datos as { detail?: unknown } | null)?.detail
-    throw new ApiError(resp.status, typeof detalle === 'string' ? detalle : `Error ${resp.status}`)
+    throw new ApiError(resp.status, typeof detalle === 'string' ? detalle : mensajePorEstado(resp.status))
   }
   return datos as T
 }

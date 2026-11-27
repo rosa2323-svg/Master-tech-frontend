@@ -5,7 +5,8 @@ import { useAlert } from '../context/AlertContext'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useCatalog } from '../context/CatalogContext'
-import EntregaPedido, { type SeleccionEntrega } from '../components/EntregaPedido'
+import EntregaPedido from '../components/EntregaPedido'
+import type { SeleccionEntrega } from '../components/entregaTipos'
 import { formatoSoles, imagenProducto, IMG_DEFECTO } from '../utils/format'
 
 export default function Cart() {
@@ -28,10 +29,10 @@ export default function Cart() {
       abrirLogin()
       return
     }
-    if (!seleccion) return mostrarAlerta('Elige tu distrito y escribe tu dirección de entrega.')
+    if (!seleccion) return mostrarAlerta('Completa cómo quieres recibir tu pedido (dirección de entrega o sede de recojo).')
     setPagando(true)
     try {
-      const { url } = await api.checkout(itemsPedido, seleccion.entrega)
+      const { url } = await api.checkout(itemsPedido, seleccion.checkout)
       window.location.href = url // Stripe Checkout
     } catch (e) {
       mostrarAlerta(e instanceof Error ? e.message : 'No se pudo iniciar el pago.')
@@ -119,14 +120,14 @@ export default function Cart() {
                 <hr />
                 {sesion
                   ? <EntregaPedido items={itemsPedido} onCambio={setSeleccion} />
-                  : <p className="small text-muted"><i className="bi bi-geo-alt me-1" />Inicia sesión para elegir tu dirección y calcular el envío.</p>}
+                  : <p className="small text-muted"><i className="bi bi-geo-alt me-1" />Inicia sesión para elegir cómo recibir tu pedido.</p>}
                 <div className="d-flex justify-content-between mb-2 text-muted">
                   <span>Envío</span>
                   {seleccion
                     ? (costoEnvio === 0
-                        ? <span className="text-success fw-semibold">Gratis</span>
+                        ? <span className="text-success fw-semibold">{seleccion.cotizacion.tipoEntrega === 'RECOJO' ? 'Recojo gratis' : 'Gratis'}</span>
                         : <span>{formatoSoles(costoEnvio)}</span>)
-                    : <span className="small">Elige tu distrito</span>}
+                    : <span className="small">Elige cómo recibirlo</span>}
                 </div>
                 <hr />
                 <div className="d-flex justify-content-between mb-4">

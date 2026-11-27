@@ -80,9 +80,20 @@ export interface EntregaInput {
   longitud: number
 }
 
+/** A dónde va (o dónde se recoge) un pedido, para cotizar. */
+export type DestinoEnvio =
+  | { tipoEntrega: 'DOMICILIO'; latitud: number; longitud: number }
+  | { tipoEntrega: 'RECOJO'; puntoRepartoId: number }
+
+/** Entrega elegida al pagar. */
+export type EntregaCheckout =
+  | { tipoEntrega: 'DOMICILIO'; entrega: EntregaInput }
+  | { tipoEntrega: 'RECOJO'; puntoRepartoId: number }
+
 /** Respuesta de /pedidos/cotizar. Si `cubierto` es false solo viene `mensaje`. */
 export interface Cotizacion {
   cubierto: boolean
+  tipoEntrega?: 'DOMICILIO' | 'RECOJO'
   mensaje?: string | null
   subtotal?: number
   costoEnvio?: number
@@ -90,6 +101,7 @@ export interface Cotizacion {
   envioGratis?: boolean
   distanciaKm?: number
   sedeNombre?: string
+  sedeDireccion?: string
   tarifaNombre?: string
   /** YYYY-MM-DD */
   entregaDesde?: string

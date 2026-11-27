@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useCatalog } from '../context/CatalogContext'
 import EntregaPedido from '../components/EntregaPedido'
-import type { SeleccionEntrega } from '../components/entregaTipos'
+import type { SeleccionEntrega } from '../utils/entregaTipos'
 import { formatoSoles, imagenProducto, IMG_DEFECTO } from '../utils/format'
 
 export default function Cart() {

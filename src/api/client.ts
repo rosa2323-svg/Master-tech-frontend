@@ -1,5 +1,5 @@
 import type {
-  AgrupacionTendencia, PuntoTendencia, ConcentracionIngresos, IngresoPromedio, IngresoDiario, ProductosVendidos, BotHistorial, BotRespuesta, Categoria, Perfil, Producto, ProductoInput, RegistroData, Rol, Sesion, Usuario, Venta,
+  AgrupacionTendencia, PuntoTendencia, ConcentracionIngresos, IngresoPromedio, IngresoDiario, ProductosVendidos, BotHistorial, BotRespuesta, Categoria, CheckoutEmbebido, ConfigEnvio, Cotizacion, DestinoEnvio, EntregaCheckout, EnvioEvento, Feriado, HuecoTarifa, Lugar, Perfil, Producto, ProductoInput, PuntoReparto, PuntoRepartoInput, RegistroData, Rol, Sesion, SolicitudReembolso, Sugerencia, TarifaEnvio, TarifaEnvioInput, Usuario, Venta,
 } from './types'
 
 // Cada variable admite UNA o VARIAS URLs separadas por coma, en orden de preferencia:
@@ -100,7 +100,13 @@ async function peticion<T>(ruta: string, { method = 'GET', body, form }: Opcione
 
   if (!resp.ok) {
     const d = (datos ?? {}) as { message?: string; error?: string }
-    const mensaje = d.message || d.error || `Error ${resp.status}`
+    let mensaje = d.message || d.error || `Error ${resp.status}`
+    // «Recurso no encontrado» en una ruta del API = ese servidor no tiene la función (versión anterior desplegada).
+    if (resp.status === 404 && mensaje === 'Recurso no encontrado') {
+      let servidor = ''
+      try { servidor = ` (${new URL(resp.url).origin})` } catch { /* sin URL */ }
+      mensaje = `El servidor${servidor} no tiene esta función: probablemente tiene una versión anterior del backend.`
+    }
     if (resp.status === 401 && token && ruta !== '/api/auth/login') onNoAutorizado?.()
     throw new ApiError(resp.status, mensaje)
   }
@@ -117,15 +123,14 @@ export const api = {
   me: () => get<Omit<Sesion, 'token'>>('/api/auth/me'),
 
   // Catálogo (público)
-  /** Catálogo público (solo habilitados). Con `todos` y sesión de ADMIN incluye los inhabilitados. */
-  productos: (todos = false) => get<Producto[]>(`/api/v1/productos${todos ? '?todos=true' : ''}`),
+  productos: () => get<Producto[]>('/api/v1/productos'),
   producto: (id: number | string) => get<Producto>(`/api/v1/productos/${id}`),
   categorias: () => get<Categoria[]>('/api/v1/categorias'),
 
   // Admin: productos
   crearProducto: (d: ProductoInput) => send<Producto>('POST', '/api/v1/productos', d),
   actualizarProducto: (id: number, d: ProductoInput) => send<Producto>('PUT', `/api/v1/productos/${id}`, d),
-  cambiarActivoProducto: (id: number, activo: boolean) => send<Producto>('PATCH', `/api/v1/productos/${id}/activo`, { activo }),
+  eliminarProducto: (id: number) => send<void>('DELETE', `/api/v1/productos/${id}`),
   subirImagenProducto: (id: number, archivo: File) => {
     const form = new FormData()
     form.append('imagen', archivo)
@@ -178,8 +183,36 @@ export const api = {
 
   // Despacho (DESPACHADOR y ADMIN)
   pedidosDespacho: () => get<Venta[]>('/api/v1/despacho/pedidos'),
-  cambiarEstadoPedido: (id: number, estado: string) =>
-      send<Venta>('PATCH', `/api/v1/despacho/pedidos/${id}/estado`, { estado }),
+  cambiarEstadoPedido: (id: number, estado: string, nota?: string) =>
+      send<Venta>('PATCH', `/api/v1/despacho/pedidos/${id}/estado`, { estado, nota: nota?.trim() || undefined }),
+  eventosPedido: (id: number) => get<EnvioEvento[]>(`/api/v1/despacho/pedidos/${id}/eventos`),
+
+  // Reembolsos (solo ADMIN)
+  reembolsos: (estado?: string) => get<SolicitudReembolso[]>(`/api/v1/reembolsos${estado ? `?estado=${estado}` : ''}`),
+  aprobarReembolso: (id: number, nota?: string) =>
+    send<SolicitudReembolso>('POST', `/api/v1/reembolsos/${id}/aprobar`, { nota: nota?.trim() || undefined }),
+  rechazarReembolso: (id: number, nota: string) =>
+    send<SolicitudReembolso>('POST', `/api/v1/reembolsos/${id}/rechazar`, { nota: nota.trim() }),
+
+  // Envíos: configuración (solo ADMIN)
+  puntosReparto: () => get<PuntoReparto[]>('/api/v1/envios/puntos-reparto'),
+  crearPuntoReparto: (d: PuntoRepartoInput) => send<PuntoReparto>('POST', '/api/v1/envios/puntos-reparto', d),
+  actualizarPuntoReparto: (id: number, d: PuntoRepartoInput) =>
+    send<PuntoReparto>('PUT', `/api/v1/envios/puntos-reparto/${id}`, d),
+  activarPuntoReparto: (id: number, activo: boolean) =>
+    send<PuntoReparto>('PATCH', `/api/v1/envios/puntos-reparto/${id}/activo`, { activo }),
+  tarifasEnvio: () => get<TarifaEnvio[]>('/api/v1/envios/tarifas'),
+  huecosTarifas: () => get<HuecoTarifa[]>('/api/v1/envios/tarifas/huecos'),
+  crearTarifaEnvio: (d: TarifaEnvioInput) => send<TarifaEnvio>('POST', '/api/v1/envios/tarifas', d),
+  actualizarTarifaEnvio: (id: number, d: TarifaEnvioInput) =>
+    send<TarifaEnvio>('PUT', `/api/v1/envios/tarifas/${id}`, d),
+  activarTarifaEnvio: (id: number, activo: boolean) =>
+    send<TarifaEnvio>('PATCH', `/api/v1/envios/tarifas/${id}/activo`, { activo }),
+  configEnvio: () => get<ConfigEnvio>('/api/v1/envios/configuracion'),
+  guardarConfigEnvio: (d: ConfigEnvio) => send<ConfigEnvio>('PUT', '/api/v1/envios/configuracion', d),
+  feriados: () => get<Feriado[]>('/api/v1/envios/feriados'),
+  crearFeriado: (d: Feriado) => send<Feriado>('POST', '/api/v1/envios/feriados', d),
+  eliminarFeriado: (fecha: string) => send<void>('DELETE', `/api/v1/envios/feriados/${fecha}`),
 
   // Cliente autenticado
   miPerfil: () => get<Perfil>('/api/v1/me'),
@@ -188,10 +221,24 @@ export const api = {
   cambiarPassword: (d: { passwordActual: string; passwordNuevo: string; passwordConfirm: string }) =>
     send<{ mensaje: string }>('PUT', '/api/v1/me/password', d),
   misPedidos: () => get<Venta[]>('/api/v1/me/pedidos'),
+  solicitarReembolso: (ventaId: number, motivo: string) =>
+    send<SolicitudReembolso>('POST', `/api/v1/me/pedidos/${ventaId}/reembolso`, { motivo }),
+  misReembolsos: () => get<SolicitudReembolso[]>('/api/v1/me/reembolsos'),
+  seguimientoPedido: (id: number) => get<EnvioEvento[]>(`/api/v1/me/pedidos/${id}/seguimiento`),
 
   // Pago
-  checkout: (items: { productoId: number; cantidad: number }[]) =>
-    send<{ url: string }>('POST', '/api/v1/pedidos/checkout', { items }),
+  direccionesDisponible: () => get<{ disponible: boolean }>('/api/v1/pedidos/direcciones/disponible'),
+  direccionInversa: (latitud: number, longitud: number) =>
+    get<Lugar>(`/api/v1/pedidos/direcciones/inversa?latitud=${latitud}&longitud=${longitud}`),
+  sugerirDirecciones: (texto: string, token: string) =>
+    get<Sugerencia[]>(`/api/v1/pedidos/direcciones/sugerencias?texto=${encodeURIComponent(texto)}&token=${encodeURIComponent(token)}`),
+  detalleDireccion: (placeId: string, token: string) =>
+    get<Lugar>(`/api/v1/pedidos/direcciones/detalle?placeId=${encodeURIComponent(placeId)}&token=${encodeURIComponent(token)}`),
+  puntosRecojo: () => get<PuntoReparto[]>('/api/v1/pedidos/puntos-recojo'),
+  cotizarEnvio: (items: { productoId: number; cantidad: number }[], destino: DestinoEnvio) =>
+    send<Cotizacion>('POST', '/api/v1/pedidos/cotizar', { items, ...destino }),
+  checkout: (items: { productoId: number; cantidad: number }[], entrega: EntregaCheckout) =>
+    send<CheckoutEmbebido>('POST', '/api/v1/pedidos/checkout', { items, ...entrega }),
   confirmarPago: (sessionId: string) => send<Venta>('POST', '/api/v1/pedidos/confirmar', { sessionId }),
 }
 

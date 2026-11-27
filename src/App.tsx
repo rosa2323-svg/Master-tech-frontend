@@ -17,6 +17,8 @@ import Terminos from './pages/Terminos'
 import AdminCategorias from './pages/admin/Categorias'
 import AdminDashboard from './pages/admin/Dashboard'
 import AdminDespacho from './pages/admin/Despacho'
+import AdminEnvios from './pages/admin/Envios'
+import AdminReembolsos from './pages/admin/Reembolsos'
 import AdminProductos from './pages/admin/Productos'
 import AdminUsuarios from './pages/admin/Usuarios'
 import AdminVentas from './pages/admin/Ventas'
@@ -48,6 +50,8 @@ export default function App() {
           <Route path="ventas" element={<AdminVentas />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="usuarios" element={<AdminUsuarios />} />
+          <Route path="envios" element={<AdminEnvios />} />
+          <Route path="reembolsos" element={<AdminReembolsos />} />
         </Route>
       </Route>
 

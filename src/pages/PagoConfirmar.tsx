@@ -5,7 +5,7 @@ import type { Venta } from '../api/types'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useCatalog } from '../context/CatalogContext'
-import { formatoSoles } from '../utils/format'
+import { formatoDiaLargo, formatoSoles } from '../utils/format'
 
 /** Destino de Stripe tras el pago: verifica la sesión, registra la venta y vacía el carrito. */
 export default function PagoConfirmar() {
@@ -54,7 +54,18 @@ export default function PagoConfirmar() {
         <ul className="list-unstyled text-start mx-auto my-3" style={{ maxWidth: 360 }}>
           <li className="d-flex justify-content-between mb-2"><span className="text-muted">N.º de orden</span><strong>{venta.numeroOrden}</strong></li>
           <li className="d-flex justify-content-between mb-2"><span className="text-muted">Productos</span><strong>{venta.cantidadItems}</strong></li>
-          <li className="d-flex justify-content-between"><span className="text-muted">Total</span><strong className="text-danger">{formatoSoles(venta.total)}</strong></li>
+          <li className="d-flex justify-content-between mb-2"><span className="text-muted">Subtotal</span><strong>{formatoSoles(venta.total)}</strong></li>
+          <li className="d-flex justify-content-between mb-2"><span className="text-muted">Envío</span><strong>{venta.costoEnvio ? formatoSoles(venta.costoEnvio) : 'Gratis'}</strong></li>
+          <li className="d-flex justify-content-between"><span className="text-muted">Total pagado</span><strong className="text-danger">{formatoSoles(venta.total + (venta.costoEnvio ?? 0))}</strong></li>
+          {venta.tipoEntrega === 'RECOJO' ? (
+            <li className="mt-3 small text-muted">
+              <i className="bi bi-shop me-1" />Recoge en {venta.puntoRepartoNombre ?? 'la tienda'}
+              {venta.direccionEntrega && <> ({venta.direccionEntrega})</>}
+              {venta.fechaEstimadaEntrega && <>, desde el {formatoDiaLargo(venta.fechaEstimadaEntrega)}</>}
+            </li>
+          ) : venta.fechaEstimadaEntrega && (
+            <li className="mt-3 small text-muted"><i className="bi bi-truck me-1" />Llegada estimada: hasta el {formatoDiaLargo(venta.fechaEstimadaEntrega)}</li>
+          )}
         </ul>
         <div className="d-flex gap-2 justify-content-center flex-wrap">
           <Link to="/perfil" className="btn btn-danger rounded-pill px-4">Ver mis compras</Link>

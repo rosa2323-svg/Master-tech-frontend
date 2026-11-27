@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import { useAlert } from '../context/AlertContext'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useCatalog } from '../context/CatalogContext'
+import EntregaPedido from '../components/EntregaPedido'
+import type { SeleccionEntrega } from '../components/entregaTipos'
 import { formatoSoles, imagenProducto, IMG_DEFECTO } from '../utils/format'
 
 export default function Cart() {
@@ -13,6 +15,9 @@ export default function Cart() {
   const { sesion, abrirLogin } = useAuth()
   const { mostrarAlerta } = useAlert()
   const [pagando, setPagando] = useState(false)
+  const [seleccion, setSeleccion] = useState<SeleccionEntrega | null>(null)
+  const itemsPedido = useMemo(() => items.map(i => ({ productoId: i.id, cantidad: i.cantidad })), [items])
+  const costoEnvio = sesion ? (seleccion?.cotizacion.costoEnvio ?? 0) : 0
 
   useEffect(() => { document.title = 'Carrito | MASTER TECH' }, [])
   useEffect(() => { if (!cargando) sincronizar(productos) }, [cargando, productos, sincronizar])
@@ -24,9 +29,10 @@ export default function Cart() {
       abrirLogin()
       return
     }
+    if (!seleccion) return mostrarAlerta('Completa cómo quieres recibir tu pedido (dirección de entrega o sede de recojo).')
     setPagando(true)
     try {
-      const { url } = await api.checkout(items.map(i => ({ productoId: i.id, cantidad: i.cantidad })))
+      const { url } = await api.checkout(itemsPedido, seleccion.checkout)
       window.location.href = url // Stripe Checkout
     } catch (e) {
       mostrarAlerta(e instanceof Error ? e.message : 'No se pudo iniciar el pago.')
@@ -112,15 +118,23 @@ export default function Cart() {
                   ))}
                 </ul>
                 <hr />
+                {sesion
+                  ? <EntregaPedido items={itemsPedido} onCambio={setSeleccion} />
+                  : <p className="small text-muted"><i className="bi bi-geo-alt me-1" />Inicia sesión para elegir cómo recibir tu pedido.</p>}
                 <div className="d-flex justify-content-between mb-2 text-muted">
-                  <span>Envío estimado</span><span className="text-success fw-semibold">Gratis</span>
+                  <span>Envío</span>
+                  {seleccion
+                    ? (costoEnvio === 0
+                        ? <span className="text-success fw-semibold">{seleccion.cotizacion.tipoEntrega === 'RECOJO' ? 'Recojo gratis' : 'Gratis'}</span>
+                        : <span>{formatoSoles(costoEnvio)}</span>)
+                    : <span className="small">Elige cómo recibirlo</span>}
                 </div>
                 <hr />
                 <div className="d-flex justify-content-between mb-4">
                   <span className="fw-bold fs-5">Total</span>
-                  <span className="fw-bold fs-5 text-danger">{formatoSoles(total)}</span>
+                  <span className="fw-bold fs-5 text-danger">{formatoSoles(total + costoEnvio)}</span>
                 </div>
-                <button type="button" className="btn btn-comprar w-100 py-3 fs-6" disabled={pagando} onClick={continuarCompra}>
+                <button type="button" className="btn btn-comprar w-100 py-3 fs-6" disabled={pagando || !seleccion} onClick={continuarCompra}>
                   <i className="bi bi-credit-card-fill me-2" />{pagando ? 'Redirigiendo a Stripe…' : 'Continuar compra'}
                 </button>
                 <p className="text-center text-muted small mt-3 mb-0"><i className="bi bi-lock-fill me-1" /> Pago seguro garantizado</p>

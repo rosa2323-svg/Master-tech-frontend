@@ -1,7 +1,5 @@
 export interface Producto {
   id: number
-  /** Código legible y único (LAP-0001: abreviatura de la categoría + número). Lo asigna el servidor; es de solo lectura. */
-  codigo?: string
   nombre: string
   descripcion?: string | null
   precio: number
@@ -10,8 +8,6 @@ export interface Producto {
   stock: number
   categoriaId: number
   categoriaNombre?: string | null
-  /** false = inhabilitado (baja lógica): no se muestra ni se vende en la tienda. */
-  activo?: boolean
 }
 
 export interface ProductoInput {
@@ -25,8 +21,6 @@ export interface ProductoInput {
 
 export interface Categoria {
   id: number
-  /** Abreviatura única de la categoría (LAP, CON…). Lo asigna el servidor; es de solo lectura. */
-  codigo?: string
   nombre: string
   descripcion?: string | null
   imagenUrl?: string | null
@@ -59,12 +53,104 @@ export interface Venta {
   cantidadItems: number
   numeroOrden: string
   estado: string
+  /** Próximo estado del flujo (según sea a domicilio o recojo); null si terminó. */
+  siguienteEstado?: string | null
+  /** Solo en despacho: el cliente pidió reembolso y falta resolverlo. */
+  reembolsoPendiente?: boolean
   usuarioId?: number
   usuarioNombre?: string
   usuarioEmail?: string
   usuarioDireccion?: string | null
   usuarioTelefono?: string | null
+  tipoEntrega?: 'DOMICILIO' | 'RECOJO'
+  costoEnvio?: number
+  direccionEntrega?: string | null
+  latitudEntrega?: number | null
+  longitudEntrega?: number | null
+  distanciaKm?: number | null
+  puntoRepartoId?: number | null
+  puntoRepartoNombre?: string | null
+  fechaEstimadaEntrega?: string | null
+  fechaEntregaReal?: string | null
+  fechaAnulacion?: string | null
+  motivoAnulacion?: string | null
   detalles: DetalleVenta[]
+}
+
+/** Solicitud de reembolso de un pedido. */
+export interface SolicitudReembolso {
+  id: number
+  ventaId: number
+  numeroOrden: string
+  usuarioNombre?: string | null
+  usuarioEmail?: string | null
+  estadoVenta: string
+  tipoEntrega?: string | null
+  /** Productos + envío. */
+  monto: number
+  motivo: string
+  estado: 'PENDIENTE' | 'APROBADA' | 'RECHAZADA'
+  fechaSolicitud: string
+  fechaResolucion?: string | null
+  resueltoPorNombre?: string | null
+  notaAdmin?: string | null
+}
+
+/** Un paso del historial de un pedido. */
+export interface EnvioEvento {
+  estado: string
+  fecha: string
+  usuarioNombre?: string | null
+  nota?: string | null
+}
+
+/** Dirección de entrega a domicilio enviada al pagar. */
+export interface EntregaInput {
+  direccion: string
+  latitud: number
+  longitud: number
+}
+
+/** A dónde va (o dónde se recoge) un pedido, para cotizar. */
+export type DestinoEnvio =
+  | { tipoEntrega: 'DOMICILIO'; latitud: number; longitud: number }
+  | { tipoEntrega: 'RECOJO'; puntoRepartoId: number }
+
+/** Entrega elegida al pagar. */
+export type EntregaCheckout =
+  | { tipoEntrega: 'DOMICILIO'; entrega: EntregaInput }
+  | { tipoEntrega: 'RECOJO'; puntoRepartoId: number }
+
+/** Respuesta de /pedidos/cotizar. Si `cubierto` es false solo viene `mensaje`. */
+export interface Cotizacion {
+  cubierto: boolean
+  tipoEntrega?: 'DOMICILIO' | 'RECOJO'
+  mensaje?: string | null
+  subtotal?: number
+  costoEnvio?: number
+  total?: number
+  envioGratis?: boolean
+  distanciaKm?: number
+  sedeNombre?: string
+  sedeDireccion?: string
+  tarifaNombre?: string
+  /** YYYY-MM-DD */
+  entregaDesde?: string
+  /** YYYY-MM-DD */
+  entregaHasta?: string
+}
+
+/** Sugerencia del autocompletado de direcciones. */
+export interface Sugerencia {
+  placeId: string
+  texto: string
+}
+
+/** Dirección confirmada con su ubicación exacta. */
+export interface Lugar {
+  direccion: string
+  latitud: number
+  longitud: number
 }
 
 export interface Usuario {
@@ -139,6 +225,67 @@ export interface ConcentracionIngresos {
   productos: ItemConcentracion[]
   otrosIngreso: number
   otrosPct: number
+}
+
+// ---- Envíos: configuración (solo ADMIN) ----
+export interface PuntoReparto {
+  id: number
+  nombre: string
+  direccion: string
+  latitud: number
+  longitud: number
+  permiteRecojo: boolean
+  activo: boolean
+}
+
+export interface PuntoRepartoInput {
+  nombre: string
+  direccion: string
+  latitud: number
+  longitud: number
+  permiteRecojo: boolean
+}
+
+/** Tramo de distancia [desde, hasta) en km, con costo en soles y plazo en días hábiles. */
+export interface TarifaEnvio {
+  id: number
+  nombre: string
+  distanciaDesdeKm: number
+  distanciaHastaKm: number
+  costo: number
+  envioGratisDesde: number | null
+  diasEntregaMin: number
+  diasEntregaMax: number
+  activo: boolean
+}
+
+export interface TarifaEnvioInput {
+  nombre: string
+  distanciaDesdeKm: number
+  distanciaHastaKm: number
+  costo: number
+  envioGratisDesde: number | null
+  diasEntregaMin: number
+  diasEntregaMax: number
+}
+
+/** Rango de km que ningún tramo activo cubre. */
+export interface HuecoTarifa {
+  desdeKm: number
+  hastaKm: number
+}
+
+export interface ConfigEnvio {
+  /** HH:mm (el servidor puede devolver HH:mm:ss). */
+  horaCorte: string
+  diasPreparacion: number
+  zonaHoraria: string
+}
+
+export interface Feriado {
+  /** AAAA-MM-DD */
+  fecha: string
+  descripcion: string
 }
 
 // ---- Asistente (bot-core): http://localhost:8090 ----

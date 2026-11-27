@@ -8,6 +8,8 @@ const ENLACES = [
   { to: '/admin/ventas', icono: 'bi-receipt', texto: 'Ventas' },
   { to: '/admin/dashboard', icono: 'bi-bar-chart-line', texto: 'Dashboard' },
   { to: '/admin/usuarios', icono: 'bi-people', texto: 'Usuarios' },
+  { to: '/admin/reembolsos', icono: 'bi-arrow-counterclockwise', texto: 'Reembolsos' },
+  { to: '/admin/envios', icono: 'bi-geo-alt', texto: 'Envíos' },
   { to: '/despacho/pedidos', icono: 'bi-truck', texto: 'Despacho' },
 ]
 

@@ -2,9 +2,11 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Accordion, Modal, Tab, Tabs } from 'react-bootstrap'
 import { api } from '../api/client'
 import type { Perfil, Venta } from '../api/types'
+import HistorialPedido from '../components/HistorialPedido'
 import PasswordInput from '../components/PasswordInput'
 import { useAlert } from '../context/AlertContext'
-import { formatoFecha, formatoSoles } from '../utils/format'
+import { claseEstado } from '../utils/estados'
+import { formatoDiaLargo, formatoFecha, formatoSoles } from '../utils/format'
 
 const CLAVE_ICONO = 'mastertech_icono_perfil'
 const ICONO_DEFECTO = 'bi-person-circle'
@@ -28,6 +30,7 @@ export default function Profile() {
   const [perfil, setPerfil] = useState<Perfil | null>(null)
   const [pedidos, setPedidos] = useState<Venta[]>([])
   const [cargando, setCargando] = useState(true)
+  const [pedidoAbierto, setPedidoAbierto] = useState<string | null>(null)
   const [icono, setIcono] = useState(iconoGuardado)
   const [modalIconos, setModalIconos] = useState(false)
 
@@ -183,19 +186,27 @@ export default function Profile() {
               <p className="text-muted mt-3 mb-0">Aún no has realizado ninguna compra.</p>
             </div>
           ) : (
-            <Accordion className="shadow-sm">
+            <Accordion className="shadow-sm" onSelect={k => setPedidoAbierto(typeof k === 'string' ? k : null)}>
               {pedidos.map(v => (
                 <Accordion.Item eventKey={String(v.id)} key={v.id}>
                   <Accordion.Header>
                     <div className="d-flex flex-wrap w-100 justify-content-between pe-3 gap-2">
                       <span className="fw-bold">{v.numeroOrden}</span>
                       <span className="text-muted small">{formatoFecha(v.fecha)}</span>
-                      <span className="badge bg-success align-self-center">{v.estado || 'Pagado'}</span>
+                      <span className={`badge ${claseEstado(v.estado || 'Pagado')} align-self-center`}>{v.estado || 'Pagado'}</span>
                       <span className="fw-bold text-danger">{formatoSoles(v.total)}</span>
                     </div>
                   </Accordion.Header>
                   <Accordion.Body>
-                    <table className="table table-sm mb-0">
+                    <p className="small text-muted mb-3">
+                      {v.tipoEntrega === 'RECOJO'
+                        ? <><i className="bi bi-shop me-1" />Recojo en {v.puntoRepartoNombre ?? 'tienda'}{v.direccionEntrega && <> ({v.direccionEntrega})</>}</>
+                        : <><i className="bi bi-truck me-1" />Entrega a {v.direccionEntrega ?? 'tu dirección'}</>}
+                      {v.fechaEstimadaEntrega && v.estado !== 'Entregado' && v.estado !== 'ANULADA'
+                        && <> · {v.tipoEntrega === 'RECOJO' ? 'Listo desde el' : 'Llega hasta el'} {formatoDiaLargo(v.fechaEstimadaEntrega)}</>}
+                      {v.costoEnvio ? <> · Envío {formatoSoles(v.costoEnvio)}</> : null}
+                    </p>
+                    <table className="table table-sm mb-3">
                       <thead><tr><th>Producto</th><th className="text-center">Cant.</th><th className="text-end">P. unit.</th><th className="text-end">Subtotal</th></tr></thead>
                       <tbody>
                         {v.detalles.map(d => (
@@ -208,6 +219,12 @@ export default function Profile() {
                         ))}
                       </tbody>
                     </table>
+                    {pedidoAbierto === String(v.id) && (
+                      <>
+                        <div className="fw-semibold small mb-2">Seguimiento</div>
+                        <HistorialPedido pedidoId={v.id} modo="cliente" version={v.estado} />
+                      </>
+                    )}
                   </Accordion.Body>
                 </Accordion.Item>
               ))}

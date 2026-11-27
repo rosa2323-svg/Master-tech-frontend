@@ -53,6 +53,8 @@ export interface Venta {
   cantidadItems: number
   numeroOrden: string
   estado: string
+  /** Próximo estado del flujo (según sea a domicilio o recojo); null si terminó. */
+  siguienteEstado?: string | null
   usuarioId?: number
   usuarioNombre?: string
   usuarioEmail?: string
@@ -71,6 +73,14 @@ export interface Venta {
   fechaAnulacion?: string | null
   motivoAnulacion?: string | null
   detalles: DetalleVenta[]
+}
+
+/** Un paso del historial de un pedido. */
+export interface EnvioEvento {
+  estado: string
+  fecha: string
+  usuarioNombre?: string | null
+  nota?: string | null
 }
 
 /** Dirección de entrega a domicilio enviada al pagar. */

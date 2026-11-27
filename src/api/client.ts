@@ -1,5 +1,5 @@
 import type {
-  AgrupacionTendencia, PuntoTendencia, ConcentracionIngresos, IngresoPromedio, IngresoDiario, ProductosVendidos, BotHistorial, BotRespuesta, Categoria, ConfigEnvio, Cotizacion, DestinoEnvio, EntregaCheckout, Feriado, HuecoTarifa, Lugar, Perfil, Producto, ProductoInput, PuntoReparto, PuntoRepartoInput, RegistroData, Rol, Sesion, Sugerencia, TarifaEnvio, TarifaEnvioInput, Usuario, Venta,
+  AgrupacionTendencia, PuntoTendencia, ConcentracionIngresos, IngresoPromedio, IngresoDiario, ProductosVendidos, BotHistorial, BotRespuesta, Categoria, ConfigEnvio, Cotizacion, DestinoEnvio, EntregaCheckout, EnvioEvento, Feriado, HuecoTarifa, Lugar, Perfil, Producto, ProductoInput, PuntoReparto, PuntoRepartoInput, RegistroData, Rol, Sesion, Sugerencia, TarifaEnvio, TarifaEnvioInput, Usuario, Venta,
 } from './types'
 
 // Cada variable admite UNA o VARIAS URLs separadas por coma, en orden de preferencia:
@@ -177,8 +177,9 @@ export const api = {
 
   // Despacho (DESPACHADOR y ADMIN)
   pedidosDespacho: () => get<Venta[]>('/api/v1/despacho/pedidos'),
-  cambiarEstadoPedido: (id: number, estado: string) =>
-      send<Venta>('PATCH', `/api/v1/despacho/pedidos/${id}/estado`, { estado }),
+  cambiarEstadoPedido: (id: number, estado: string, nota?: string) =>
+      send<Venta>('PATCH', `/api/v1/despacho/pedidos/${id}/estado`, { estado, nota: nota?.trim() || undefined }),
+  eventosPedido: (id: number) => get<EnvioEvento[]>(`/api/v1/despacho/pedidos/${id}/eventos`),
 
   // Envíos: configuración (solo ADMIN)
   puntosReparto: () => get<PuntoReparto[]>('/api/v1/envios/puntos-reparto'),
@@ -207,6 +208,7 @@ export const api = {
   cambiarPassword: (d: { passwordActual: string; passwordNuevo: string; passwordConfirm: string }) =>
     send<{ mensaje: string }>('PUT', '/api/v1/me/password', d),
   misPedidos: () => get<Venta[]>('/api/v1/me/pedidos'),
+  seguimientoPedido: (id: number) => get<EnvioEvento[]>(`/api/v1/me/pedidos/${id}/seguimiento`),
 
   // Pago
   direccionesDisponible: () => get<{ disponible: boolean }>('/api/v1/pedidos/direcciones/disponible'),

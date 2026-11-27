@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useLocation } from 'react-router-dom'
 import type { CheckoutEmbebido } from '../api/types'
-import { iniciarCheckoutIncrustado, type CheckoutIncrustado } from '../utils/stripe'
+import { destruirCheckoutIncrustado, iniciarCheckoutIncrustado } from '../utils/stripe'
 
 const formatoRestante = (seg: number) =>
   `${String(Math.floor(seg / 60)).padStart(2, '0')}:${String(seg % 60).padStart(2, '0')}`
@@ -30,16 +30,15 @@ export default function Pago() {
   useEffect(() => {
     if (!datos || expirado || !contenedor.current) return
     let cancelado = false
-    let checkout: CheckoutIncrustado | null = null
-    iniciarCheckoutIncrustado(datos.publishableKey, datos.clientSecret)
+    const promesa = iniciarCheckoutIncrustado(datos.publishableKey, datos.clientSecret)
+    promesa
       .then(c => {
-        if (cancelado || !contenedor.current) { c.destroy(); return }
-        checkout = c
+        if (cancelado || !contenedor.current) return // el cleanup lo destruye
         c.mount(contenedor.current)
         setCargandoForm(false)
       })
       .catch(e => { if (!cancelado) { setError(e instanceof Error ? e.message : 'No se pudo iniciar el pago.'); setCargandoForm(false) } })
-    return () => { cancelado = true; checkout?.destroy() }
+    return () => { cancelado = true; destruirCheckoutIncrustado(promesa) }
   }, [datos, expirado])
 
   if (!datos) return <Navigate to="/carrito" replace />

@@ -38,9 +38,25 @@ function cargarStripeJs(): Promise<void> {
   return carga
 }
 
+/**
+ * Stripe solo admite UN pago incrustado a la vez («You cannot have multiple Embedded Checkout objects»).
+ * React en desarrollo monta, desmonta y vuelve a montar los componentes: por eso toda creación espera en esta
+ * cola a que el anterior se haya destruido por completo.
+ */
+let cola: Promise<unknown> = Promise.resolve()
+
 /** Prepara el pago incrustado de Stripe con el secreto de la sesión creada en el backend. */
-export async function iniciarCheckoutIncrustado(clavePublica: string, clientSecret: string): Promise<CheckoutIncrustado> {
-  await cargarStripeJs()
-  if (!window.Stripe) throw new Error('Stripe no está disponible.')
-  return window.Stripe(clavePublica).initEmbeddedCheckout({ clientSecret })
+export function iniciarCheckoutIncrustado(clavePublica: string, clientSecret: string): Promise<CheckoutIncrustado> {
+  const promesa = cola.then(async () => {
+    await cargarStripeJs()
+    if (!window.Stripe) throw new Error('Stripe no está disponible.')
+    return window.Stripe(clavePublica).initEmbeddedCheckout({ clientSecret })
+  })
+  cola = promesa.then(() => undefined, () => undefined)
+  return promesa
+}
+
+/** Destruye el pago incrustado cuando ya esté creado; el siguiente `iniciarCheckoutIncrustado` espera a que termine. */
+export function destruirCheckoutIncrustado(promesa: Promise<CheckoutIncrustado>): void {
+  cola = promesa.then(c => c.destroy()).then(() => undefined, () => undefined)
 }

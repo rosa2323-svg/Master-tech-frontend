@@ -77,6 +77,14 @@ export interface Venta {
   detalles: DetalleVenta[]
 }
 
+/** Datos para montar el pago incrustado de Stripe. */
+export interface CheckoutEmbebido {
+  clientSecret: string
+  publishableKey: string
+  /** Segundos Unix en que vence el tiempo para pagar. */
+  expiraEn: number
+}
+
 /** Solicitud de reembolso de un pedido. */
 export interface SolicitudReembolso {
   id: number

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { useAlert } from '../context/AlertContext'
 import { useAuth } from '../context/AuthContext'
@@ -10,6 +10,7 @@ import type { SeleccionEntrega } from '../components/entregaTipos'
 import { formatoSoles, imagenProducto, IMG_DEFECTO } from '../utils/format'
 
 export default function Cart() {
+  const navigate = useNavigate()
   const { items, total, setCantidad, quitar, vaciar, sincronizar } = useCart()
   const { productos, cargando } = useCatalog()
   const { sesion, abrirLogin } = useAuth()
@@ -32,8 +33,8 @@ export default function Cart() {
     if (!seleccion) return mostrarAlerta('Completa cómo quieres recibir tu pedido (dirección de entrega o sede de recojo).')
     setPagando(true)
     try {
-      const { url } = await api.checkout(itemsPedido, seleccion.checkout)
-      window.location.href = url // Stripe Checkout
+      const pago = await api.checkout(itemsPedido, seleccion.checkout)
+      navigate('/pago', { state: pago }) // pago incrustado de Stripe, con tiempo límite
     } catch (e) {
       mostrarAlerta(e instanceof Error ? e.message : 'No se pudo iniciar el pago.')
       setPagando(false)
@@ -135,7 +136,7 @@ export default function Cart() {
                   <span className="fw-bold fs-5 text-danger">{formatoSoles(total + costoEnvio)}</span>
                 </div>
                 <button type="button" className="btn btn-comprar w-100 py-3 fs-6" disabled={pagando || !seleccion} onClick={continuarCompra}>
-                  <i className="bi bi-credit-card-fill me-2" />{pagando ? 'Redirigiendo a Stripe…' : 'Continuar compra'}
+                  <i className="bi bi-credit-card-fill me-2" />{pagando ? 'Preparando el pago…' : 'Continuar compra'}
                 </button>
                 <p className="text-center text-muted small mt-3 mb-0"><i className="bi bi-lock-fill me-1" /> Pago seguro garantizado</p>
               </div>

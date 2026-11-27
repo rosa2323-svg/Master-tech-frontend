@@ -1,5 +1,5 @@
 import type {
-  AgrupacionTendencia, PuntoTendencia, ConcentracionIngresos, IngresoPromedio, IngresoDiario, ProductosVendidos, BotHistorial, BotRespuesta, Categoria, ConfigEnvio, Cotizacion, DestinoEnvio, EntregaCheckout, EnvioEvento, Feriado, HuecoTarifa, Lugar, Perfil, Producto, ProductoInput, PuntoReparto, PuntoRepartoInput, RegistroData, Rol, Sesion, SolicitudReembolso, Sugerencia, TarifaEnvio, TarifaEnvioInput, Usuario, Venta,
+  AgrupacionTendencia, PuntoTendencia, ConcentracionIngresos, IngresoPromedio, IngresoDiario, ProductosVendidos, BotHistorial, BotRespuesta, Categoria, CheckoutEmbebido, ConfigEnvio, Cotizacion, DestinoEnvio, EntregaCheckout, EnvioEvento, Feriado, HuecoTarifa, Lugar, Perfil, Producto, ProductoInput, PuntoReparto, PuntoRepartoInput, RegistroData, Rol, Sesion, SolicitudReembolso, Sugerencia, TarifaEnvio, TarifaEnvioInput, Usuario, Venta,
 } from './types'
 
 // Cada variable admite UNA o VARIAS URLs separadas por coma, en orden de preferencia:
@@ -100,7 +100,13 @@ async function peticion<T>(ruta: string, { method = 'GET', body, form }: Opcione
 
   if (!resp.ok) {
     const d = (datos ?? {}) as { message?: string; error?: string }
-    const mensaje = d.message || d.error || `Error ${resp.status}`
+    let mensaje = d.message || d.error || `Error ${resp.status}`
+    // «Recurso no encontrado» en una ruta del API = ese servidor no tiene la función (versión anterior desplegada).
+    if (resp.status === 404 && mensaje === 'Recurso no encontrado') {
+      let servidor = ''
+      try { servidor = ` (${new URL(resp.url).origin})` } catch { /* sin URL */ }
+      mensaje = `El servidor${servidor} no tiene esta función: probablemente tiene una versión anterior del backend.`
+    }
     if (resp.status === 401 && token && ruta !== '/api/auth/login') onNoAutorizado?.()
     throw new ApiError(resp.status, mensaje)
   }
@@ -222,6 +228,8 @@ export const api = {
 
   // Pago
   direccionesDisponible: () => get<{ disponible: boolean }>('/api/v1/pedidos/direcciones/disponible'),
+  direccionInversa: (latitud: number, longitud: number) =>
+    get<Lugar>(`/api/v1/pedidos/direcciones/inversa?latitud=${latitud}&longitud=${longitud}`),
   sugerirDirecciones: (texto: string, token: string) =>
     get<Sugerencia[]>(`/api/v1/pedidos/direcciones/sugerencias?texto=${encodeURIComponent(texto)}&token=${encodeURIComponent(token)}`),
   detalleDireccion: (placeId: string, token: string) =>
@@ -230,7 +238,7 @@ export const api = {
   cotizarEnvio: (items: { productoId: number; cantidad: number }[], destino: DestinoEnvio) =>
     send<Cotizacion>('POST', '/api/v1/pedidos/cotizar', { items, ...destino }),
   checkout: (items: { productoId: number; cantidad: number }[], entrega: EntregaCheckout) =>
-    send<{ url: string }>('POST', '/api/v1/pedidos/checkout', { items, ...entrega }),
+    send<CheckoutEmbebido>('POST', '/api/v1/pedidos/checkout', { items, ...entrega }),
   confirmarPago: (sessionId: string) => send<Venta>('POST', '/api/v1/pedidos/confirmar', { sessionId }),
 }
 

@@ -1,11 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api } from '../api/client'
 import type { Cotizacion, Lugar, Sugerencia } from '../api/types'
 import { DISTRITOS_LIMA } from '../utils/distritosLima'
-import type { SeleccionEntrega } from '../utils/entregaTipos'
+import type { SeleccionEntrega } from './entregaTipos'
+import MapaEntrega from './MapaEntrega'
 import ResumenCotizacion from './ResumenCotizacion'
 
 const nuevoToken = () => crypto.randomUUID()
+
+/** Clave de NAVEGADOR de Google Maps (restringida por referente). Sin ella no se muestra el mapa. */
+const CLAVE_MAPA = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY as string | undefined
 
 interface Props {
   items: { productoId: number; cantidad: number }[]
@@ -15,7 +19,8 @@ interface Props {
 
 /**
  * Dirección de entrega con costo de envío y fecha estimada cotizados por el servidor.
- * Si el servidor tiene la clave de Google: autocompletado (ubicación exacta; la clave nunca llega al navegador).
+ * Si el servidor tiene la clave de Google: autocompletado y mapa con pin (ubicación exacta; la clave de servidor
+ * nunca llega al navegador).
  * Si no: distrito de Lima + dirección escrita (ubicación aproximada).
  */
 export default function EntregaDomicilio({ items, onCambio }: Props) {
@@ -24,6 +29,8 @@ export default function EntregaDomicilio({ items, onCambio }: Props) {
   const [texto, setTexto] = useState('')
   const [referencia, setReferencia] = useState('')
   const [lugar, setLugar] = useState<Lugar | null>(null)
+  const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null)
+  const secuencia = useRef(0)
   const [sugerencias, setSugerencias] = useState<Sugerencia[]>([])
   const [token, setToken] = useState(nuevoToken)
   const [errorMapa, setErrorMapa] = useState<string | null>(null)
@@ -87,11 +94,36 @@ export default function EntregaDomicilio({ items, onCambio }: Props) {
     try {
       const d = await api.detalleDireccion(s.placeId, token)
       setLugar(d)
+      setPin({ lat: d.latitud, lng: d.longitud })
       setTexto(d.direccion)
       setToken(nuevoToken())
       setErrorMapa(null)
     } catch (e) {
       setErrorMapa(e instanceof Error ? e.message : 'No se pudo obtener la ubicación.')
+    }
+  }
+
+  /** El cliente marcó un punto en el mapa: se guarda esa ubicación exacta y se busca su dirección. */
+  const marcarPunto = async (lat: number, lng: number) => {
+    const id = ++secuencia.current
+    const la = Math.round(lat * 1e6) / 1e6
+    const lo = Math.round(lng * 1e6) / 1e6
+    setPin({ lat: la, lng: lo })
+    setSugerencias([])
+    setErrorMapa(null)
+    try {
+      const d = await api.direccionInversa(la, lo)
+      if (id !== secuencia.current) return
+      setLugar({ direccion: d.direccion, latitud: la, longitud: lo })
+      setTexto(d.direccion)
+    } catch (e) {
+      if (id !== secuencia.current) return
+      // Sin nombre de calle igual se puede comprar: se guarda el punto exacto.
+      const base = 'Ubicación marcada en el mapa'
+      setLugar({ direccion: base, latitud: la, longitud: lo })
+      setTexto(base)
+      setErrorMapa((e instanceof Error ? e.message : 'No pudimos obtener la dirección de ese punto.')
+        + ' Se usará el punto marcado; agrega una referencia abajo.')
     }
   }
 
@@ -104,7 +136,7 @@ export default function EntregaDomicilio({ items, onCambio }: Props) {
           <label className="form-label small mb-1" htmlFor="entDireccion">Dirección</label>
           <input id="entDireccion" className="form-control" maxLength={200} autoComplete="off"
                  placeholder="Escribe tu dirección y elige una sugerencia" value={texto}
-                 onChange={e => { setTexto(e.target.value); setLugar(null) }} />
+                 onChange={e => { setTexto(e.target.value); setLugar(null); setPin(null) }} />
           {sugerencias.length > 0 && (
             <ul className="list-group position-absolute w-100 shadow-sm" style={{ zIndex: 5 }}>
               {sugerencias.map(s => (
@@ -116,9 +148,10 @@ export default function EntregaDomicilio({ items, onCambio }: Props) {
             </ul>
           )}
           {texto.trim().length >= 3 && !lugar && sugerencias.length === 0 && !errorMapa && (
-            <div className="small text-muted mt-1">Elige una de las sugerencias para confirmar la ubicación.</div>
+            <div className="small text-muted mt-1">Elige una de las sugerencias{CLAVE_MAPA ? ' o marca el punto en el mapa' : ''} para confirmar la ubicación.</div>
           )}
           {errorMapa && <div className="small text-danger mt-1">{errorMapa}</div>}
+          {CLAVE_MAPA && <MapaEntrega clave={CLAVE_MAPA} posicion={pin} onElegir={(la, lo) => void marcarPunto(la, lo)} />}
         </div>
       ) : (
         <>

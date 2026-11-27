@@ -173,13 +173,19 @@ export default function AdminDespacho() {
                                                         <li className="detalle-item">
                                                             <span>Dirección</span>
                                                             <span>
-                                                                {p.direccionEntrega || p.usuarioDireccion || 'Sin dirección registrada'}
+                                                                {p.direccionEntrega || <span className="texto-tenue">Este pedido no guardó dirección de entrega</span>}
                                                                 {p.latitudEntrega != null && p.longitudEntrega != null && (
                                                                     <> · <a href={`https://www.google.com/maps?q=${p.latitudEntrega},${p.longitudEntrega}`}
                                                                             target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}>
                                                                         Ver en el mapa</a></>
                                                                 )}
                                                             </span>
+                                                        </li>
+                                                    )}
+                                                    {!esRecojo(p) && !p.direccionEntrega && p.usuarioDireccion && (
+                                                        <li className="detalle-item">
+                                                            <span>Dirección del perfil</span>
+                                                            <span>{p.usuarioDireccion} <span className="texto-tenue small">(solo referencia; no es la dirección de entrega)</span></span>
                                                         </li>
                                                     )}
                                                     {!esRecojo(p) && p.puntoRepartoNombre && (

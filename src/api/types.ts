@@ -97,6 +97,19 @@ export interface Cotizacion {
   entregaHasta?: string
 }
 
+/** Sugerencia del autocompletado de direcciones. */
+export interface Sugerencia {
+  placeId: string
+  texto: string
+}
+
+/** Dirección confirmada con su ubicación exacta. */
+export interface Lugar {
+  direccion: string
+  latitud: number
+  longitud: number
+}
+
 export interface Usuario {
   id: number
   nombre: string

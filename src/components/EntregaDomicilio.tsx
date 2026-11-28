@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { api } from '../api/client'
 import type { Cotizacion, Lugar, Sugerencia } from '../api/types'
 import { DISTRITOS_LIMA } from '../utils/distritosLima'
-import type { SeleccionEntrega } from './entregaTipos'
+import type { SeleccionEntrega } from '../utils/entregaTipos'
 import MapaEntrega from './MapaEntrega'
 import ResumenCotizacion from './ResumenCotizacion'
 

@@ -8,6 +8,8 @@ export interface Producto {
   stock: number
   categoriaId: number
   categoriaNombre?: string | null
+  /** false = inhabilitado (no se vende ni aparece en la tienda). */
+  activo?: boolean
 }
 
 export interface ProductoInput {

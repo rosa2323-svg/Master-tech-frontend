@@ -33,7 +33,9 @@ describe('cola del pago incrustado de Stripe', () => {
   })
 
   it('un fallo al crear no bloquea la cola', async () => {
-    vi.stubGlobal('window', { Stripe: () => ({ initEmbeddedCheckout: vi.fn().mockRejectedValueOnce(new Error('falló')).mockResolvedValue({ destroy: vi.fn() }) }) })
+    // Un solo mock compartido: Stripe(...) se llama en cada intento y debe devolver el mismo.
+    const initEmbeddedCheckout = vi.fn().mockRejectedValueOnce(new Error('falló')).mockResolvedValue({ destroy: vi.fn() })
+    vi.stubGlobal('window', { Stripe: () => ({ initEmbeddedCheckout }) })
     const { iniciarCheckoutIncrustado } = await import('../utils/stripe')
 
     await expect(iniciarCheckoutIncrustado('pk_test', 'a')).rejects.toThrow('falló')

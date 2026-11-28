@@ -1,5 +1,7 @@
 export interface Producto {
   id: number
+  /** Código legible asignado por el backend (ej. PRD-0001). */
+  codigo?: string | null
   nombre: string
   descripcion?: string | null
   precio: number
@@ -23,6 +25,8 @@ export interface ProductoInput {
 
 export interface Categoria {
   id: number
+  /** Código legible asignado por el backend (ej. CAT-0001). */
+  codigo?: string | null
   nombre: string
   descripcion?: string | null
   imagenUrl?: string | null

@@ -27,6 +27,9 @@ export default function DespachoLayout() {
                         <NavLink to="/despacho/pedidos" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                             <i className="bi bi-truck" /> Pedidos
                         </NavLink>
+                        <NavLink to="/despacho/reembolsos" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                            <i className="bi bi-arrow-counterclockwise" /> Reembolsos
+                        </NavLink>
                     </div>
                 </div>
             </nav>

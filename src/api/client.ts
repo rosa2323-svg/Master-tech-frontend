@@ -17,19 +17,23 @@ const ESPERA_CANDIDATA_MS = 6_000
 
 /**
  * Devuelve un `fetch` que prueba las URLs en orden y recuerda la última que funcionó.
- * Solo salta a la siguiente si no hubo respuesta (error de red) o el servidor está caído/dormido (502/503/504):
- * un 401, 404 o 500 son respuestas reales y NO se reintentan en otro servidor. Las peticiones que modifican datos
- * (POST/PUT/PATCH/DELETE) no se cortan antes de `esperaFinalMs` (0 = sin límite), para no duplicarlas.
+ * Solo las lecturas (GET) saltan a la siguiente URL si no hubo respuesta (error de red) o el servidor está
+ * caído/dormido (502/503/504): un 401, 404 o 500 son respuestas reales y NO se reintentan en otro servidor.
+ * Las peticiones que modifican datos (POST/PUT/PATCH/DELETE) van SOLO al servidor activo y nunca se reenvían a otro:
+ * un pago, un cambio de estado o un reembolso podrían duplicarse o caer en un servidor con datos distintos.
+ * Estas se esperan hasta `esperaFinalMs` (0 = sin límite). `respaldoEnEscrituras` solo lo usa el asistente (el POST del chat
+ * es una consulta que no modifica datos).
  */
-function fetchConRespaldo(urls: string[], esperaFinalMs = 0) {
+function fetchConRespaldo(urls: string[], esperaFinalMs = 0, respaldoEnEscrituras = false) {
   let activa = 0
   return async (ruta: string, init: RequestInit): Promise<Response> => {
-    const esGet = (init.method ?? 'GET') === 'GET'
+    const esGet = (init.method ?? 'GET').toUpperCase() === 'GET'
+    const orden = esGet || respaldoEnEscrituras ? urls.map((_, n) => (activa + n) % urls.length) : [activa]
     let ultimoError: unknown = new Error('sin URLs configuradas')
-    for (let n = 0; n < urls.length; n++) {
-      const i = (activa + n) % urls.length
-      const ultima = n === urls.length - 1
-      const ms = !ultima && esGet ? ESPERA_CANDIDATA_MS : esperaFinalMs
+    for (let n = 0; n < orden.length; n++) {
+      const i = orden[n]
+      const ultima = n === orden.length - 1
+      const ms = !ultima ? ESPERA_CANDIDATA_MS : esperaFinalMs
       const control = new AbortController()
       const reloj = ms > 0 ? setTimeout(() => control.abort(), ms) : null
       try {
@@ -165,14 +169,16 @@ export const api = {
   me: () => get<Omit<Sesion, 'token'>>('/api/auth/me'),
 
   // Catálogo (público)
-  productos: () => get<Producto[]>('/api/v1/productos'),
+  /** Con `todos` y token de ADMIN incluye los productos inhabilitados (panel de administración). */
+  productos: (todos = false) => get<Producto[]>(`/api/v1/productos${todos ? '?todos=true' : ''}`),
   producto: (id: number | string) => get<Producto>(`/api/v1/productos/${id}`),
   categorias: () => get<Categoria[]>('/api/v1/categorias'),
 
   // Admin: productos
   crearProducto: (d: ProductoInput) => send<Producto>('POST', '/api/v1/productos', d),
   actualizarProducto: (id: number, d: ProductoInput) => send<Producto>('PUT', `/api/v1/productos/${id}`, d),
-  eliminarProducto: (id: number) => send<void>('DELETE', `/api/v1/productos/${id}`),
+  cambiarActivoProducto: (id: number, activo: boolean) =>
+    send<Producto>('PATCH', `/api/v1/productos/${id}/activo`, { activo }),
   subirImagenProducto: (id: number, archivo: File) => {
     const form = new FormData()
     form.append('imagen', archivo)
@@ -289,7 +295,7 @@ export const api = {
 // secreto JWT mal configurado en el bot y no un token vencido); el chat muestra un aviso y ya.
 // Mayor que el presupuesto del servidor (BOT_CHAT_BUDGET_S, 50 s): el servidor responde con un aviso antes de que el navegador corte.
 const ESPERA_BOT_MS = 65_000
-const fetchBot = fetchConRespaldo(BOT_URLS, ESPERA_BOT_MS)
+const fetchBot = fetchConRespaldo(BOT_URLS, ESPERA_BOT_MS, true)
 
 async function peticionBot<T>(ruta: string, { method = 'GET', body }: { method?: string; body?: unknown } = {}): Promise<T> {
   const headers: Record<string, string> = {}

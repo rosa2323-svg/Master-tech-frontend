@@ -1,0 +1,31 @@
+name: Frontend - Compilación y pruebas
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+jobs:
+  build-y-pruebas:
+    name: npm run build + npm test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias (según package-lock.json)
+        run: npm ci
+
+      - name: Compilar (tsc + vite build)
+        run: npm run build
+
+      - name: Ejecutar pruebas (Vitest)
+        run: npm test

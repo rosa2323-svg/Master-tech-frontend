@@ -61,6 +61,7 @@ export default function App() {
         <Route path="despacho" element={<DespachoLayout />}>
           <Route index element={<Navigate to="pedidos" replace />} />
           <Route path="pedidos" element={<AdminDespacho />} />
+          <Route path="reembolsos" element={<AdminReembolsos />} />
         </Route>
       </Route>
 
